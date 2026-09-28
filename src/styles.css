@@ -142,3 +142,68 @@
     color: var(--color-foreground);
   }
 }
+
+/* ---- A4 label sheet (screen preview + print) ---- */
+
+.a4-page {
+  width: 210mm;
+  height: 297mm;
+  padding: 10mm;
+  box-sizing: border-box;
+  background: #fff;
+  color: #000;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 6mm;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.zlabel {
+  border: 0.5mm solid #000;
+  padding: 4mm;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  color: #000;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  body {
+    background: #fff !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-sheet,
+  .print-sheet * {
+    visibility: visible;
+  }
+
+  .print-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: none !important;
+    height: auto !important;
+  }
+
+  .a4-page {
+    display: grid !important;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .a4-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+}

@@ -1,0 +1,43 @@
+import { emptySender, type Sender } from "./types";
+
+const SENDER_KEY = "zawiya.sender";
+const SERVICE_KEY = "zawiya.service";
+const GENERATED_KEY = "zawiya.generatedCount";
+
+function read<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? ({ ...fallback, ...JSON.parse(raw) } as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function loadSender(): Sender {
+  return read<Sender>(SENDER_KEY, emptySender);
+}
+
+export function saveSender(sender: Sender) {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(SENDER_KEY, JSON.stringify(sender));
+  }
+}
+
+export function loadService(fallback: string): string {
+  if (typeof window === "undefined") return fallback;
+  return window.localStorage.getItem(SERVICE_KEY) || fallback;
+}
+
+export function saveService(service: string) {
+  if (typeof window !== "undefined") window.localStorage.setItem(SERVICE_KEY, service);
+}
+
+export function loadGeneratedCount(): number {
+  if (typeof window === "undefined") return 0;
+  return Number.parseInt(window.localStorage.getItem(GENERATED_KEY) || "0", 10) || 0;
+}
+
+export function saveGeneratedCount(count: number) {
+  if (typeof window !== "undefined") window.localStorage.setItem(GENERATED_KEY, String(count));
+}
