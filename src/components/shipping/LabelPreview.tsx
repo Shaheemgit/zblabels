@@ -105,7 +105,7 @@ function LabelCard({
 }: {
   order: Order;
   sender: Sender;
-  qr?: string;
+  qr?: string | undefined;
 }) {
   return (
     <div className="zlabel">

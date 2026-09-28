@@ -45,8 +45,14 @@ export function TrackingPanel({
       <Button
         className="h-12 w-full"
         onClick={() => {
-          if (selectedOrders.length === 0) return toast.error("Select at least one order");
-          if (numbers.length === 0) return toast.error("Paste at least one tracking number");
+          if (selectedOrders.length === 0) {
+            toast.error("Select at least one order");
+            return;
+          }
+          if (numbers.length === 0) {
+            toast.error("Paste at least one tracking number");
+            return;
+          }
           setConfirming(true);
         }}
       >
