@@ -155,7 +155,7 @@ export async function buildLabelsPdf(orders: Order[], sender: Sender): Promise<j
       doc,
       order,
       sender,
-      qrs[i],
+      qrs[i] ?? null,
       MARGIN + col * (LABEL_W + GAP),
       MARGIN + row * (LABEL_H + GAP),
     );

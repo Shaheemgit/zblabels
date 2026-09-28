@@ -57,10 +57,19 @@ export function ManualOrderForm({
       <Button
         className="h-12 w-full sm:w-auto"
         onClick={() => {
-          if (!draft.orderId.trim()) return toast.error("Order ID is required");
-          if (!draft.customer.trim()) return toast.error("Customer name is required");
-          if (!draft.address.trim()) return toast.error("Address is required");
-          if (!/^\d{6}$/.test(draft.pin.trim())) return toast.error("PIN code is required");
+          const problem = !draft.orderId.trim()
+            ? "Order ID is required"
+            : !draft.customer.trim()
+              ? "Customer name is required"
+              : !draft.address.trim()
+                ? "Address is required"
+                : !/^\d{6}$/.test(draft.pin.trim())
+                  ? "PIN code is required"
+                  : null;
+          if (problem) {
+            toast.error(problem);
+            return;
+          }
           onAdd({
             ...draft,
             qty: Number.parseInt(draft.qty, 10) || 1,
