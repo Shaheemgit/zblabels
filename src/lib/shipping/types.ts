@@ -11,14 +11,14 @@ export type Sender = {
 };
 
 export const emptySender: Sender = {
-  name: "",
-  address1: "",
+  name: "Zawiya books",
+  address1: "Edarikkode PO",
   address2: "",
-  place: "",
+  place: "Malappuram",
   postOffice: "",
   district: "",
   state: "",
-  pin: "",
+  pin: "676501",
   mobile: "",
 };
 
@@ -32,30 +32,12 @@ export type Order = {
   book: string;
   qty: number;
   amount: number;
-  tracking: string;
-  service: string;
+  post: string;
+  payment: "Prepaid" | "COD";
 };
 
-export const SERVICES = [
-  "Speed Post",
-  "India Post Parcel",
-  "Book Post",
-  "Registered Post",
-  "Other",
-] as const;
-
-export type OrderStatus = "Ready" | "Tracking Added" | "Label Ready";
-
-export function statusOf(order: Order): OrderStatus {
-  if (!order.tracking.trim()) return "Ready";
-  if (order.service) return "Label Ready";
-  return "Tracking Added";
-}
-
 export function senderIsComplete(s: Sender): boolean {
-  return Boolean(
-    s.name.trim() && s.address1.trim() && s.place.trim() && s.pin.trim() && s.mobile.trim(),
-  );
+  return Boolean(s.name.trim() && s.address1.trim() && s.place.trim() && s.pin.trim());
 }
 
 export function senderLines(s: Sender): string[] {

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { LABELS_PER_PAGE, qrDataUrl } from "@/lib/shipping/pdf";
+import { INSTAGRAM_URL, LABELS_PER_PAGE, qrDataUrl } from "@/lib/shipping/pdf";
 import { senderLines, type Order, type Sender } from "@/lib/shipping/types";
 
 function chunk<T>(items: T[], size: number): T[][] {
@@ -13,24 +13,19 @@ function chunk<T>(items: T[], size: number): T[][] {
 export function LabelPreview({ orders, sender }: { orders: Order[]; sender: Sender }) {
   const pages = chunk(orders, LABELS_PER_PAGE);
   const [page, setPage] = useState(0);
-  const [qrs, setQrs] = useState<Record<string, string>>({});
+  const [qr, setQr] = useState("");
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const entries = await Promise.all(
-        orders
-          .filter((o) => o.tracking.trim())
-          .map(async (o) => [o.id, await qrDataUrl(o.tracking.trim())] as const),
-      );
-      if (!cancelled) setQrs(Object.fromEntries(entries));
-    })();
+    qrDataUrl(INSTAGRAM_URL).then((url) => {
+      if (!cancelled) setQr(url);
+    });
     return () => {
       cancelled = true;
     };
-  }, [orders]);
+  }, []);
 
   useLayoutEffect(() => {
     const measure = () => {
@@ -88,7 +83,7 @@ export function LabelPreview({ orders, sender }: { orders: Order[]; sender: Send
               data-page-index={i}
             >
               {pageOrders.map((order) => (
-                <LabelCard key={order.id} order={order} sender={sender} qr={qrs[order.id]} />
+                <LabelCard key={order.id} order={order} sender={sender} qr={qr} />
               ))}
             </div>
           ))}
@@ -114,19 +109,8 @@ function LabelCard({
           ZAWIYA BOOKS
         </div>
         <div style={{ fontSize: "6.5pt", letterSpacing: "0.12em" }}>BOOK SHIPMENT</div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: "8.5pt",
-            fontWeight: 700,
-            marginTop: "1.5mm",
-            paddingBottom: "1.5mm",
-            borderBottom: "0.4mm solid #000",
-          }}
-        >
-          <span>INDIA POST</span>
-          <span>{(order.service || "").toUpperCase()}</span>
+        <div style={{ fontSize: "8.5pt", fontWeight: 700, marginTop: "1.5mm", paddingBottom: "1.5mm", borderBottom: "0.4mm solid #000" }}>
+          {order.post || "BOOK DELIVERY"} · {order.payment.toUpperCase()}
         </div>
       </div>
 
@@ -137,9 +121,7 @@ function LabelCard({
           {senderLines(sender).map((l) => (
             <div key={l}>{l}</div>
           ))}
-          <div>
-            PIN: {sender.pin} &nbsp; Mobile: {sender.mobile}
-          </div>
+          <div>PIN: {sender.pin}{sender.mobile ? ` · Mobile: ${sender.mobile}` : ""}</div>
         </div>
       </div>
 
@@ -159,7 +141,7 @@ function LabelCard({
         <div>Order ID: {order.orderId}</div>
         <div>Book: {order.book || "-"}</div>
         <div>
-          Quantity: {order.qty} &nbsp;&nbsp; Amount: ₹{order.amount}
+          Quantity: {order.qty} &nbsp;&nbsp; {order.payment === "COD" ? "COD amount" : "Amount"}: ₹{order.amount}
         </div>
       </div>
 
@@ -175,19 +157,10 @@ function LabelCard({
         }}
       >
         <div>
-          <div style={{ fontSize: "6.5pt", fontWeight: 700, letterSpacing: "0.08em" }}>
-            TRACKING / CONSIGNMENT NO.
-          </div>
-          <div style={{ fontSize: "11pt", fontWeight: 700, fontFamily: "monospace" }}>
-            {order.tracking || "-"}
-          </div>
-          <div style={{ fontSize: "5.5pt", lineHeight: 1.3, marginTop: "1mm" }}>
-            QR of the tracking number entered above.
-            <br />
-            Not an official India Post barcode.
-          </div>
+          <div style={{ fontSize: "8pt", fontWeight: 700 }}>Thank you for shopping with Zawiya Books!</div>
+          <div style={{ fontSize: "6pt", lineHeight: 1.3, marginTop: "1mm" }}>Scan to visit us on Instagram</div>
         </div>
-        {qr && <img src={qr} alt="" style={{ width: "24mm", height: "24mm" }} />}
+        {qr && <img src={qr} alt="Zawiya Books Instagram QR code" style={{ width: "24mm", height: "24mm" }} />}
       </div>
     </div>
   );
