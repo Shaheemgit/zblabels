@@ -249,6 +249,12 @@ function App() {
         </Section>
       </main>
 
+      {showPreview && selectedOrders.length > 0 && (
+        <div className="hidden print:block">
+          <LabelPreview orders={selectedOrders} sender={sender} />
+        </div>
+      )}
+
       <div className="fixed inset-x-0 bottom-0 border-t bg-background p-3 print:hidden sm:hidden">
         <Button className="h-12 w-full" onClick={downloadPdf} disabled={busy}>
           Generate Labels ({selectedOrders.length})

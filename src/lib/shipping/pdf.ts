@@ -124,7 +124,7 @@ function drawLabel(
   }
   doc.text(`Quantity: ${order.qty}    ${order.payment === "COD" ? "COD amount" : "Amount"}: Rs. ${order.amount}`, left, cursor);
 
-  // Tracking block anchored to the bottom
+  // Thank-you note and Instagram QR anchored to the bottom
   const trackTop = y + LABEL_H - 30;
   doc.setLineWidth(0.3);
   doc.line(left, trackTop, x + LABEL_W - pad, trackTop);

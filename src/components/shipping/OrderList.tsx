@@ -36,7 +36,7 @@ export function OrderList({
   if (orders.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No orders yet. Paste orders from your sheet or add one manually.
+        No orders yet. Add an order above to get started.
       </p>
     );
   }
@@ -76,13 +76,13 @@ export function OrderList({
                   </div>
                   <div className="mt-2">
                     <Label
-                      htmlFor={`track-${order.id}`}
+                      htmlFor={`post-${order.id}`}
                       className="text-xs text-muted-foreground"
                     >
                       Post / Service
                     </Label>
                     <Input
-                      id={`track-${order.id}`}
+                      id={`post-${order.id}`}
                       className="mt-1 h-11"
                       placeholder="e.g. Speed Post"
                       value={order.post}
