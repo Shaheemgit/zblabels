@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Pencil, Trash2 } from "lucide-react";
-import { statusOf, type Order } from "@/lib/shipping/types";
+import type { Order } from "@/lib/shipping/types";
 
 export function OrderList({
   orders,
@@ -54,7 +54,6 @@ export function OrderList({
 
       <div className="space-y-3">
         {orders.map((order) => {
-          const status = statusOf(order);
           return (
             <div key={order.id} className="rounded-md border p-3">
               <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
@@ -67,33 +66,35 @@ export function OrderList({
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="truncate font-medium">{order.customer}</span>
-                    <Badge variant={status === "Label Ready" ? "default" : "secondary"}>
-                      {status}
-                    </Badge>
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     {order.orderId} · PIN {order.pin} · {order.mobile || "no mobile"}
                   </div>
                   <div className="mt-1 text-xs">
                     {order.book || "—"} × {order.qty} · ₹{order.amount}
-                    {order.service ? ` · ${order.service}` : ""}
+                    {order.post ? ` · ${order.post}` : ""} · {order.payment}
                   </div>
                   <div className="mt-2">
                     <Label
                       htmlFor={`track-${order.id}`}
                       className="text-xs text-muted-foreground"
                     >
-                      Tracking / Consignment Number
+                      Post / Service
                     </Label>
                     <Input
                       id={`track-${order.id}`}
-                      className="mt-1 h-11 font-mono"
-                      placeholder="EM123456789IN"
-                      value={order.tracking}
-                      onChange={(e) =>
-                        onUpdate({ ...order, tracking: e.target.value.toUpperCase() })
-                      }
+                      className="mt-1 h-11"
+                      placeholder="e.g. Speed Post"
+                      value={order.post}
+                      onChange={(e) => onUpdate({ ...order, post: e.target.value })}
                     />
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    <Label htmlFor={`payment-${order.id}`} className="text-xs text-muted-foreground">Payment</Label>
+                    <Select value={order.payment} onValueChange={(value: "Prepaid" | "COD") => onUpdate({ ...order, payment: value })}>
+                      <SelectTrigger id={`payment-${order.id}`} className="h-11 w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="Prepaid">Prepaid</SelectItem><SelectItem value="COD">COD</SelectItem></SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
