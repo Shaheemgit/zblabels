@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import { senderLines, type Order, type Sender } from "./types";
 
 export const LABELS_PER_PAGE = 4;
+export const INSTAGRAM_URL = "https://www.instagram.com/zawiya_books/";
 
 export async function qrDataUrl(text: string): Promise<string> {
   return QRCode.toDataURL(text, { errorCorrectionLevel: "M", margin: 1, width: 512 });
@@ -54,8 +55,7 @@ function drawLabel(
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text("INDIA POST", left, cursor);
-  doc.text((order.service || "").toUpperCase(), x + LABEL_W - pad, cursor, { align: "right" });
+  doc.text(`${order.post || "BOOK DELIVERY"} · ${order.payment.toUpperCase()}`, left, cursor, { maxWidth: innerW });
   cursor += 2.5;
   doc.setLineWidth(0.3);
   doc.line(left, cursor, x + LABEL_W - pad, cursor);
@@ -78,7 +78,7 @@ function drawLabel(
       cursor += 3.2;
     }
   }
-  doc.text(`PIN: ${sender.pin}   Mobile: ${sender.mobile}`, left, cursor);
+  doc.text(`PIN: ${sender.pin}${sender.mobile ? `   Mobile: ${sender.mobile}` : ""}`, left, cursor);
   cursor += 3.5;
   doc.setLineWidth(0.3);
   doc.line(left, cursor, x + LABEL_W - pad, cursor);
@@ -122,29 +122,24 @@ function drawLabel(
     doc.text(w, left, cursor);
     cursor += 3.4;
   }
-  doc.text(`Quantity: ${order.qty}    Amount: Rs. ${order.amount}`, left, cursor);
+  doc.text(`Quantity: ${order.qty}    ${order.payment === "COD" ? "COD amount" : "Amount"}: Rs. ${order.amount}`, left, cursor);
 
   // Tracking block anchored to the bottom
   const trackTop = y + LABEL_H - 30;
   doc.setLineWidth(0.3);
   doc.line(left, trackTop, x + LABEL_W - pad, trackTop);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.text("TRACKING / CONSIGNMENT NO.", left, trackTop + 5);
-  doc.setFontSize(11);
-  doc.text(order.tracking || "-", left, trackTop + 11);
+  doc.setFontSize(8);
+  doc.text("Thank you for shopping with Zawiya Books!", left, trackTop + 7, { maxWidth: innerW - 25 });
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(5.5);
-  doc.text("QR of the tracking number entered above.", left, trackTop + 16);
-  doc.text("Not an official India Post barcode.", left, trackTop + 19);
+  doc.setFontSize(7);
+  doc.text("Scan to visit us on Instagram", left, trackTop + 13);
   if (qr) doc.addImage(qr, "PNG", x + LABEL_W - pad - 24, trackTop + 3, 24, 24);
 }
 
 export async function buildLabelsPdf(orders: Order[], sender: Sender): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-  const qrs = await Promise.all(
-    orders.map((o) => (o.tracking.trim() ? qrDataUrl(o.tracking.trim()) : Promise.resolve(null))),
-  );
+  const qr = await qrDataUrl(INSTAGRAM_URL);
 
   orders.forEach((order, i) => {
     const slot = i % LABELS_PER_PAGE;
@@ -155,7 +150,7 @@ export async function buildLabelsPdf(orders: Order[], sender: Sender): Promise<j
       doc,
       order,
       sender,
-      qrs[i] ?? null,
+      qr,
       MARGIN + col * (LABEL_W + GAP),
       MARGIN + row * (LABEL_H + GAP),
     );

@@ -14,7 +14,14 @@ function read<T>(key: string, fallback: T): T {
 }
 
 export function loadSender(): Sender {
-  return read<Sender>(SENDER_KEY, emptySender);
+  const saved = read<Sender>(SENDER_KEY, emptySender);
+  return {
+    ...saved,
+    name: saved.name || emptySender.name,
+    address1: saved.address1 || emptySender.address1,
+    place: saved.place || emptySender.place,
+    pin: saved.pin || emptySender.pin,
+  };
 }
 
 export function saveSender(sender: Sender) {
