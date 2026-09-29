@@ -2,7 +2,7 @@ import type { Order } from "./types";
 
 export type ParsedRow = {
   key: string;
-  order: Omit<Order, "id" | "tracking" | "service">;
+  order: Omit<Order, "id">;
   errors: string[];
 };
 
@@ -60,6 +60,8 @@ export function parseOrders(text: string): ParsedRow[] {
         book,
         qty: Number.isFinite(qty) && qty > 0 ? qty : 1,
         amount: Number.isFinite(amount) ? amount : 0,
+        post: "",
+        payment: "Prepaid",
       },
       errors,
     });

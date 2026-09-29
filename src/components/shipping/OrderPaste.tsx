@@ -10,7 +10,7 @@ import type { Order } from "@/lib/shipping/types";
 export function OrderPaste({
   onImport,
 }: {
-  onImport: (orders: Omit<Order, "id" | "tracking" | "service">[]) => void;
+  onImport: (orders: Omit<Order, "id">[]) => void;
 }) {
   const [text, setText] = useState("");
   const [removed, setRemoved] = useState<string[]>([]);

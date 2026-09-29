@@ -45,8 +45,8 @@ export function SenderSettings({
       <Button
         className="h-12 w-full sm:w-auto"
         onClick={() => {
-          if (!draft.name.trim() || !draft.pin.trim()) {
-            toast.error("Sender name and PIN code are required");
+          if (!draft.name.trim() || !draft.address1.trim() || !draft.place.trim() || !draft.pin.trim()) {
+            toast.error("Sender name, address, place and PIN code are required");
             return;
           }
           onSave(draft);
