@@ -14,18 +14,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
-import { Printer, FileDown, Settings as SettingsIcon } from "lucide-react";
+import { Printer, FileDown } from "lucide-react";
 import { ManualOrderForm } from "@/components/shipping/ManualOrderForm";
 import { OrderList } from "@/components/shipping/OrderList";
 import { LabelPreview } from "@/components/shipping/LabelPreview";
-import { SenderSettings } from "@/components/shipping/SenderSettings";
 import { buildLabelsPdf, pdfFileName } from "@/lib/shipping/pdf";
-import {
-  loadGeneratedCount,
-  loadSender,
-  saveGeneratedCount,
-  saveSender,
-} from "@/lib/shipping/storage";
+import { loadGeneratedCount, loadSender, saveGeneratedCount } from "@/lib/shipping/storage";
 import { emptySender, senderIsComplete, type Order, type Sender } from "@/lib/shipping/types";
 
 export const Route = createFileRoute("/")({
@@ -118,16 +112,9 @@ function App() {
       <Toaster />
 
       <header className="border-b print:hidden">
-        <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4">
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold tracking-tight">Zawiya Books</h1>
-            <p className="text-sm text-muted-foreground">Shipping Label Generator</p>
-          </div>
-          <Button variant="outline" size="icon" aria-label="Settings" asChild>
-            <a href="#settings">
-              <SettingsIcon className="h-4 w-4" />
-            </a>
-          </Button>
+        <div className="mx-auto max-w-3xl px-4 py-4">
+          <h1 className="truncate text-xl font-semibold tracking-tight">Zawiya Books</h1>
+          <p className="text-sm text-muted-foreground">Shipping Label Generator</p>
         </div>
       </header>
 
@@ -238,15 +225,6 @@ function App() {
           )}
         </Section>
 
-        <Section title="Settings" step="4" id="settings">
-          <SenderSettings
-            sender={sender}
-            onSave={(s) => {
-              setSender(s);
-              saveSender(s);
-            }}
-          />
-        </Section>
       </main>
 
       {showPreview && selectedOrders.length > 0 && (
