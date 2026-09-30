@@ -17,9 +17,9 @@ export const emptySender: Sender = {
   place: "Malappuram",
   postOffice: "",
   district: "",
-  state: "",
+  state: "Keralam",
   pin: "676501",
-  mobile: "",
+  mobile: "+91 8301 941 146",
 };
 
 export type Order = {
