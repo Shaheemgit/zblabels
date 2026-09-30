@@ -106,7 +106,7 @@ export function ManualOrderForm({
             </div>
           ) : (
             <Select
-              value={draft.book || undefined}
+              value={draft.book}
               onValueChange={(v) => (v === NEW_BOOK ? setAddingBook(true) : set("book")(v))}
             >
               <SelectTrigger id="m-book" className="h-11 w-full">
