@@ -217,6 +217,7 @@ export function ManualOrderForm({
           <Field label="Amount" value={draft.amount} onChange={set("amount")} numeric />
         </div>
       </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
       <Button
         className="h-12 w-full sm:w-auto"
         onClick={() => {
@@ -247,6 +248,18 @@ export function ManualOrderForm({
       >
         Add Order
       </Button>
+      <Button
+        variant="outline"
+        className="h-12 w-full sm:w-auto"
+        onClick={() => {
+          clearDraft();
+          setDraft({ ...empty, orderId: formatOrderId(seq) });
+          toast.success("Form cleared");
+        }}
+      >
+        Clear
+      </Button>
+      </div>
     </div>
   );
 }
