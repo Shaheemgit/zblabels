@@ -4,6 +4,9 @@ const GENERATED_KEY = "zawiya.generatedCount";
 const ORDER_SEQ_KEY = "zawiya.orderSeq";
 const BOOKS_KEY = "zawiya.books";
 const POSTS_KEY = "zawiya.posts";
+const ORDERS_KEY = "zawiya.orders";
+const SELECTED_KEY = "zawiya.selected";
+const DRAFT_KEY = "zawiya.draft";
 
 export function loadSender(): Sender {
   return emptySender;
@@ -62,4 +65,48 @@ export function loadPosts(): string[] {
 
 export function savePosts(posts: string[]) {
   if (typeof window !== "undefined") window.localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+}
+
+export function loadOrders<T>(): T[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(window.localStorage.getItem(ORDERS_KEY) || "[]") as T[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveOrders(orders: unknown[]) {
+  if (typeof window !== "undefined") window.localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+}
+
+export function loadSelected(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(window.localStorage.getItem(SELECTED_KEY) || "[]") as string[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveSelected(ids: string[]) {
+  if (typeof window !== "undefined") window.localStorage.setItem(SELECTED_KEY, JSON.stringify(ids));
+}
+
+export function loadDraft<T>(): T | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveDraft(draft: unknown) {
+  if (typeof window !== "undefined") window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+}
+
+export function clearDraft() {
+  if (typeof window !== "undefined") window.localStorage.removeItem(DRAFT_KEY);
 }
