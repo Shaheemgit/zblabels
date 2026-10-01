@@ -51,13 +51,10 @@ export function ManualOrderForm({
     const n = peekOrderSeq();
     setSeq(n);
     setDraft((d) => ({ ...d, orderId: formatOrderId(n), book: DEFAULT_BOOK }));
-    setBooks((prevBooks) => {
-      const loaded = loadBooks();
-      const next = loaded.includes(DEFAULT_BOOK) ? loaded : [DEFAULT_BOOK, ...loaded];
-      if (!loaded.includes(DEFAULT_BOOK)) saveBooks(next);
-      void prevBooks;
-      return next;
-    });
+    const loaded = loadBooks();
+    const next = loaded.includes(DEFAULT_BOOK) ? loaded : [DEFAULT_BOOK, ...loaded];
+    if (!loaded.includes(DEFAULT_BOOK)) saveBooks(next);
+    setBooks(next);
   }, []);
 
   function saveNewBook() {
