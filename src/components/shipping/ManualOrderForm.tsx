@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Order } from "@/lib/shipping/types";
 import {
+  DEFAULT_BOOK,
   commitOrderSeq,
   formatOrderId,
   loadBooks,
@@ -25,7 +26,7 @@ const empty: Draft = {
   address: "",
   pin: "",
   mobile: "",
-  book: "",
+  book: DEFAULT_BOOK,
   post: "",
   payment: "Prepaid",
   qty: "1",
@@ -49,8 +50,11 @@ export function ManualOrderForm({
   useEffect(() => {
     const n = peekOrderSeq();
     setSeq(n);
-    setDraft((d) => ({ ...d, orderId: formatOrderId(n) }));
-    setBooks(loadBooks());
+    setDraft((d) => ({ ...d, orderId: formatOrderId(n), book: DEFAULT_BOOK }));
+    const loaded = loadBooks();
+    const next = loaded.includes(DEFAULT_BOOK) ? loaded : [DEFAULT_BOOK, ...loaded];
+    if (!loaded.includes(DEFAULT_BOOK)) saveBooks(next);
+    setBooks(next);
   }, []);
 
   function saveNewBook() {
