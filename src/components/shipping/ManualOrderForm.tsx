@@ -49,17 +49,30 @@ export function ManualOrderForm({
   const [books, setBooks] = useState<string[]>([]);
   const [addingBook, setAddingBook] = useState(false);
   const [newBook, setNewBook] = useState("");
+  const [posts, setPosts] = useState<string[]>([]);
+  const [addingPost, setAddingPost] = useState(false);
+  const [newPost, setNewPost] = useState("");
   const set = (k: keyof Draft) => (v: string) => setDraft((d) => ({ ...d, [k]: v }));
 
   useEffect(() => {
     const n = peekOrderSeq();
     setSeq(n);
-    setDraft((d) => ({ ...d, orderId: formatOrderId(n), book: DEFAULT_BOOK }));
-    const loaded = loadBooks();
-    const next = loaded.includes(DEFAULT_BOOK) ? loaded : [DEFAULT_BOOK, ...loaded];
-    if (!loaded.includes(DEFAULT_BOOK)) saveBooks(next);
-    setBooks(next);
+    setDraft((d) => ({ ...d, orderId: formatOrderId(n), book: DEFAULT_BOOK, post: DEFAULT_POST }));
+    const loadedBooks = loadBooks();
+    const nextBooks = loadedBooks.includes(DEFAULT_BOOK) ? loadedBooks : [DEFAULT_BOOK, ...loadedBooks];
+    if (!loadedBooks.includes(DEFAULT_BOOK)) saveBooks(nextBooks);
+    setBooks(nextBooks);
+    const loadedPosts = loadPosts();
+    const nextPosts = loadedPosts.includes(DEFAULT_POST) ? loadedPosts : [DEFAULT_POST, ...loadedPosts];
+    if (!loadedPosts.includes(DEFAULT_POST)) savePosts(nextPosts);
+    setPosts(nextPosts);
   }, []);
+
+  function addToList(list: string[], save: (items: string[]) => void, name: string) {
+    const next = list.includes(name) ? list : [...list, name];
+    save(next);
+    return next;
+  }
 
   function saveNewBook() {
     const name = newBook.trim();
@@ -67,13 +80,24 @@ export function ManualOrderForm({
       toast.error("Enter a book name");
       return;
     }
-    const next = books.includes(name) ? books : [...books, name];
-    setBooks(next);
-    saveBooks(next);
+    setBooks(addToList(books, saveBooks, name));
     setDraft((d) => ({ ...d, book: name }));
     setNewBook("");
     setAddingBook(false);
     toast.success("Book added to list");
+  }
+
+  function saveNewPost() {
+    const name = newPost.trim();
+    if (!name) {
+      toast.error("Enter a post / service name");
+      return;
+    }
+    setPosts(addToList(posts, savePosts, name));
+    setDraft((d) => ({ ...d, post: name }));
+    setNewPost("");
+    setAddingPost(false);
+    toast.success("Post / service added to list");
   }
 
   return (
