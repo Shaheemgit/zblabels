@@ -30,13 +30,16 @@ export function formatOrderId(n: number) {
   return `ZB${String(n).padStart(3, "0")}`;
 }
 
+export const DEFAULT_BOOK = "Hirayil ninnu hridayathilek";
+
 export function loadBooks(): string[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return [DEFAULT_BOOK];
   try {
     const raw = window.localStorage.getItem(BOOKS_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : ["Hirayil Ninn Hridayathilekku"];
+    const books = raw ? (JSON.parse(raw) as string[]) : [];
+    return books.includes(DEFAULT_BOOK) || books.length > 0 ? books : [DEFAULT_BOOK];
   } catch {
-    return [];
+    return [DEFAULT_BOOK];
   }
 }
 
