@@ -8,11 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { Order } from "@/lib/shipping/types";
 import {
   DEFAULT_BOOK,
+  DEFAULT_POST,
   commitOrderSeq,
   formatOrderId,
   loadBooks,
+  loadPosts,
   peekOrderSeq,
   saveBooks,
+  savePosts,
 } from "@/lib/shipping/storage";
 
 type Draft = Omit<Order, "id" | "qty" | "amount"> & {
@@ -27,13 +30,14 @@ const empty: Draft = {
   pin: "",
   mobile: "",
   book: DEFAULT_BOOK,
-  post: "",
+  post: DEFAULT_POST,
   payment: "Prepaid",
   qty: "1",
-  amount: "",
+  amount: "260",
 };
 
 const NEW_BOOK = "__new__";
+const NEW_POST = "__new_post__";
 
 export function ManualOrderForm({
   onAdd,
