@@ -3,6 +3,7 @@ import { emptySender, type Sender } from "./types";
 const GENERATED_KEY = "zawiya.generatedCount";
 const ORDER_SEQ_KEY = "zawiya.orderSeq";
 const BOOKS_KEY = "zawiya.books";
+const POSTS_KEY = "zawiya.posts";
 
 export function loadSender(): Sender {
   return emptySender;
@@ -31,6 +32,7 @@ export function formatOrderId(n: number) {
 }
 
 export const DEFAULT_BOOK = "Hirayil ninnu hridayathilek";
+export const DEFAULT_POST = "India Post";
 
 export function loadBooks(): string[] {
   if (typeof window === "undefined") return [DEFAULT_BOOK];
@@ -45,4 +47,19 @@ export function loadBooks(): string[] {
 
 export function saveBooks(books: string[]) {
   if (typeof window !== "undefined") window.localStorage.setItem(BOOKS_KEY, JSON.stringify(books));
+}
+
+export function loadPosts(): string[] {
+  if (typeof window === "undefined") return [DEFAULT_POST];
+  try {
+    const raw = window.localStorage.getItem(POSTS_KEY);
+    const posts = raw ? (JSON.parse(raw) as string[]) : [];
+    return posts.includes(DEFAULT_POST) || posts.length > 0 ? posts : [DEFAULT_POST];
+  } catch {
+    return [DEFAULT_POST];
+  }
+}
+
+export function savePosts(posts: string[]) {
+  if (typeof window !== "undefined") window.localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
 }
