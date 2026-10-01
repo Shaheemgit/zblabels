@@ -19,7 +19,15 @@ import { ManualOrderForm } from "@/components/shipping/ManualOrderForm";
 import { OrderList } from "@/components/shipping/OrderList";
 import { LabelPreview } from "@/components/shipping/LabelPreview";
 import { buildLabelsPdf, pdfFileName } from "@/lib/shipping/pdf";
-import { loadGeneratedCount, loadSender, saveGeneratedCount } from "@/lib/shipping/storage";
+import {
+  loadGeneratedCount,
+  loadOrders,
+  loadSelected,
+  loadSender,
+  saveGeneratedCount,
+  saveOrders,
+  saveSelected,
+} from "@/lib/shipping/storage";
 import { emptySender, senderIsComplete, type Order, type Sender } from "@/lib/shipping/types";
 
 export const Route = createFileRoute("/")({
@@ -58,7 +66,19 @@ function App() {
   useEffect(() => {
     setSender(loadSender());
     setGenerated(loadGeneratedCount());
+    const savedOrders = loadOrders<Order>();
+    setOrders(savedOrders);
+    const savedSelected = loadSelected();
+    setSelected(savedSelected.filter((id) => savedOrders.some((o) => o.id === id)));
   }, []);
+
+  useEffect(() => {
+    saveOrders(orders);
+  }, [orders]);
+
+  useEffect(() => {
+    saveSelected(selected);
+  }, [selected]);
 
   const selectedOrders = useMemo(
     () => orders.filter((o) => selected.includes(o.id)),

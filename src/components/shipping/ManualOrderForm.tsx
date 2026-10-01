@@ -9,12 +9,15 @@ import type { Order } from "@/lib/shipping/types";
 import {
   DEFAULT_BOOK,
   DEFAULT_POST,
+  clearDraft,
   commitOrderSeq,
   formatOrderId,
   loadBooks,
+  loadDraft,
   loadPosts,
   peekOrderSeq,
   saveBooks,
+  saveDraft,
   savePosts,
 } from "@/lib/shipping/storage";
 
@@ -57,7 +60,14 @@ export function ManualOrderForm({
   useEffect(() => {
     const n = peekOrderSeq();
     setSeq(n);
-    setDraft((d) => ({ ...d, orderId: formatOrderId(n), book: DEFAULT_BOOK, post: DEFAULT_POST }));
+    const saved = loadDraft<Draft>();
+    setDraft((d) => ({
+      ...d,
+      ...(saved ?? {}),
+      orderId: formatOrderId(n),
+      book: saved?.book ?? DEFAULT_BOOK,
+      post: saved?.post ?? DEFAULT_POST,
+    }));
     const loadedBooks = loadBooks();
     const nextBooks = loadedBooks.includes(DEFAULT_BOOK) ? loadedBooks : [DEFAULT_BOOK, ...loadedBooks];
     if (!loadedBooks.includes(DEFAULT_BOOK)) saveBooks(nextBooks);
@@ -67,6 +77,10 @@ export function ManualOrderForm({
     if (!loadedPosts.includes(DEFAULT_POST)) savePosts(nextPosts);
     setPosts(nextPosts);
   }, []);
+
+  useEffect(() => {
+    saveDraft(draft);
+  }, [draft]);
 
   function addToList(list: string[], save: (items: string[]) => void, name: string) {
     const next = list.includes(name) ? list : [...list, name];
@@ -203,6 +217,7 @@ export function ManualOrderForm({
           <Field label="Amount" value={draft.amount} onChange={set("amount")} numeric />
         </div>
       </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
       <Button
         className="h-12 w-full sm:w-auto"
         onClick={() => {
@@ -233,6 +248,18 @@ export function ManualOrderForm({
       >
         Add Order
       </Button>
+      <Button
+        variant="outline"
+        className="h-12 w-full sm:w-auto"
+        onClick={() => {
+          clearDraft();
+          setDraft({ ...empty, orderId: formatOrderId(seq) });
+          toast.success("Form cleared");
+        }}
+      >
+        Clear
+      </Button>
+      </div>
     </div>
   );
 }
