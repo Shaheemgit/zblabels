@@ -8,11 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { Order } from "@/lib/shipping/types";
 import {
   DEFAULT_BOOK,
+  DEFAULT_POST,
   commitOrderSeq,
   formatOrderId,
   loadBooks,
+  loadPosts,
   peekOrderSeq,
   saveBooks,
+  savePosts,
 } from "@/lib/shipping/storage";
 
 type Draft = Omit<Order, "id" | "qty" | "amount"> & {
@@ -27,13 +30,14 @@ const empty: Draft = {
   pin: "",
   mobile: "",
   book: DEFAULT_BOOK,
-  post: "",
+  post: DEFAULT_POST,
   payment: "Prepaid",
   qty: "1",
-  amount: "",
+  amount: "260",
 };
 
 const NEW_BOOK = "__new__";
+const NEW_POST = "__new_post__";
 
 export function ManualOrderForm({
   onAdd,
@@ -45,17 +49,30 @@ export function ManualOrderForm({
   const [books, setBooks] = useState<string[]>([]);
   const [addingBook, setAddingBook] = useState(false);
   const [newBook, setNewBook] = useState("");
+  const [posts, setPosts] = useState<string[]>([]);
+  const [addingPost, setAddingPost] = useState(false);
+  const [newPost, setNewPost] = useState("");
   const set = (k: keyof Draft) => (v: string) => setDraft((d) => ({ ...d, [k]: v }));
 
   useEffect(() => {
     const n = peekOrderSeq();
     setSeq(n);
-    setDraft((d) => ({ ...d, orderId: formatOrderId(n), book: DEFAULT_BOOK }));
-    const loaded = loadBooks();
-    const next = loaded.includes(DEFAULT_BOOK) ? loaded : [DEFAULT_BOOK, ...loaded];
-    if (!loaded.includes(DEFAULT_BOOK)) saveBooks(next);
-    setBooks(next);
+    setDraft((d) => ({ ...d, orderId: formatOrderId(n), book: DEFAULT_BOOK, post: DEFAULT_POST }));
+    const loadedBooks = loadBooks();
+    const nextBooks = loadedBooks.includes(DEFAULT_BOOK) ? loadedBooks : [DEFAULT_BOOK, ...loadedBooks];
+    if (!loadedBooks.includes(DEFAULT_BOOK)) saveBooks(nextBooks);
+    setBooks(nextBooks);
+    const loadedPosts = loadPosts();
+    const nextPosts = loadedPosts.includes(DEFAULT_POST) ? loadedPosts : [DEFAULT_POST, ...loadedPosts];
+    if (!loadedPosts.includes(DEFAULT_POST)) savePosts(nextPosts);
+    setPosts(nextPosts);
   }, []);
+
+  function addToList(list: string[], save: (items: string[]) => void, name: string) {
+    const next = list.includes(name) ? list : [...list, name];
+    save(next);
+    return next;
+  }
 
   function saveNewBook() {
     const name = newBook.trim();
@@ -63,13 +80,24 @@ export function ManualOrderForm({
       toast.error("Enter a book name");
       return;
     }
-    const next = books.includes(name) ? books : [...books, name];
-    setBooks(next);
-    saveBooks(next);
+    setBooks(addToList(books, saveBooks, name));
     setDraft((d) => ({ ...d, book: name }));
     setNewBook("");
     setAddingBook(false);
     toast.success("Book added to list");
+  }
+
+  function saveNewPost() {
+    const name = newPost.trim();
+    if (!name) {
+      toast.error("Enter a post / service name");
+      return;
+    }
+    setPosts(addToList(posts, savePosts, name));
+    setDraft((d) => ({ ...d, post: name }));
+    setNewPost("");
+    setAddingPost(false);
+    toast.success("Post / service added to list");
   }
 
   return (
@@ -125,7 +153,41 @@ export function ManualOrderForm({
             </Select>
           )}
         </div>
-        <Field label="Post / Service" value={draft.post} onChange={set("post")} />
+        <div className="space-y-1.5">
+          <Label htmlFor="m-post">Post / Service</Label>
+          {addingPost ? (
+            <div className="flex gap-2">
+              <Input
+                id="m-post"
+                autoFocus
+                className="h-11"
+                placeholder="New post / service"
+                value={newPost}
+                onChange={(e) => setNewPost(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && saveNewPost()}
+              />
+              <Button className="h-11" onClick={saveNewPost}>Add</Button>
+              <Button variant="ghost" className="h-11" onClick={() => setAddingPost(false)}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Select
+              value={draft.post}
+              onValueChange={(v) => (v === NEW_POST ? setAddingPost(true) : set("post")(v))}
+            >
+              <SelectTrigger id="m-post" className="h-11 w-full">
+                <SelectValue placeholder="Choose a post / service" />
+              </SelectTrigger>
+              <SelectContent>
+                {posts.map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+                <SelectItem value={NEW_POST}>+ Add new post / service</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </div>
         <div className="space-y-1.5">
           <Label htmlFor="m-payment">Payment</Label>
           <Select value={draft.payment} onValueChange={(value: "Prepaid" | "COD") => setDraft((d) => ({ ...d, payment: value }))}>
