@@ -153,7 +153,41 @@ export function ManualOrderForm({
             </Select>
           )}
         </div>
-        <Field label="Post / Service" value={draft.post} onChange={set("post")} />
+        <div className="space-y-1.5">
+          <Label htmlFor="m-post">Post / Service</Label>
+          {addingPost ? (
+            <div className="flex gap-2">
+              <Input
+                id="m-post"
+                autoFocus
+                className="h-11"
+                placeholder="New post / service"
+                value={newPost}
+                onChange={(e) => setNewPost(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && saveNewPost()}
+              />
+              <Button className="h-11" onClick={saveNewPost}>Add</Button>
+              <Button variant="ghost" className="h-11" onClick={() => setAddingPost(false)}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Select
+              value={draft.post}
+              onValueChange={(v) => (v === NEW_POST ? setAddingPost(true) : set("post")(v))}
+            >
+              <SelectTrigger id="m-post" className="h-11 w-full">
+                <SelectValue placeholder="Choose a post / service" />
+              </SelectTrigger>
+              <SelectContent>
+                {posts.map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+                <SelectItem value={NEW_POST}>+ Add new post / service</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </div>
         <div className="space-y-1.5">
           <Label htmlFor="m-payment">Payment</Label>
           <Select value={draft.payment} onValueChange={(value: "Prepaid" | "COD") => setDraft((d) => ({ ...d, payment: value }))}>
