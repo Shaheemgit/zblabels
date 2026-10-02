@@ -71,7 +71,7 @@ export function OrderList({
                     {order.orderId} · PIN {order.pin} · {order.mobile || "no mobile"}
                   </div>
                   <div className="mt-1 text-xs">
-                    {order.book || "—"} × {order.qty} · ₹{order.amount}
+                    {order.book || "—"} × {order.qty} · ₹{orderTotals(order).total}
                     {order.post ? ` · ${order.post}` : ""} · {order.payment}
                   </div>
                   <div className="mt-2">
@@ -170,7 +170,7 @@ export function OrderList({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-amount">Amount</Label>
+                  <Label htmlFor="edit-amount">Book Price</Label>
                   <Input
                     id="edit-amount"
                     className="h-11"
