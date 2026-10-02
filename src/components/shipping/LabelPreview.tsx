@@ -137,32 +137,17 @@ function LabelCard({
         <div style={{ fontSize: "9pt" }}>Mobile: {order.mobile || "-"}</div>
       </div>
 
-      <div style={{ marginTop: "1.5mm", fontSize: "7.5pt", lineHeight: 1.4 }}>
-        <div>Order ID: {order.orderId}</div>
-        <div>Book: {order.book || "-"}</div>
-        <div>
-          Quantity: {order.qty}</div>
-        <div style={{ fontWeight: 700 }}>
-          {order.payment === "COD" ? "COD amount" : "Amount"}: {amountText(order)}
+      <div style={{ marginTop: "1.5mm", display: "flex", justifyContent: "space-between", gap: "2mm" }}>
+        <div style={{ fontSize: "7.5pt", lineHeight: 1.4, minWidth: 0 }}>
+          <div>Order ID: {order.orderId} · Qty: {order.qty}</div>
+          <div>Book: {order.book || "-"}</div>
+          <div style={{ fontWeight: 700 }}>
+            {order.payment === "COD" ? "COD amount" : "Amount"}: {amountText(order)}
+          </div>
+          <div style={{ fontSize: "8pt", fontWeight: 700, marginTop: "1mm" }}>Thank you for shopping with Zawiya Books!</div>
+          <div style={{ fontSize: "6pt" }}>Scan to visit us on Instagram</div>
         </div>
-      </div>
-
-      <div
-        style={{
-          marginTop: "auto",
-          borderTop: "0.3mm solid #000",
-          paddingTop: "1.2mm",
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "2mm",
-        }}
-      >
-        <div>
-          <div style={{ fontSize: "8pt", fontWeight: 700 }}>Thank you for shopping with Zawiya Books!</div>
-          <div style={{ fontSize: "6pt", lineHeight: 1.3, marginTop: "1mm" }}>Scan to visit us on Instagram</div>
-        </div>
-        {qr && <img src={qr} alt="Zawiya Books Instagram QR code" style={{ width: "18mm", height: "18mm" }} />}
+        {qr && <img src={qr} alt="Zawiya Books Instagram QR code" style={{ width: "18mm", height: "18mm", flexShrink: 0 }} />}
       </div>
     </div>
   );
