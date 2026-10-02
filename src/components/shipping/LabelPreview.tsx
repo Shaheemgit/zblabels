@@ -162,7 +162,7 @@ function LabelCard({
           <div style={{ fontSize: "8pt", fontWeight: 700 }}>Thank you for shopping with Zawiya Books!</div>
           <div style={{ fontSize: "6pt", lineHeight: 1.3, marginTop: "1mm" }}>Scan to visit us on Instagram</div>
         </div>
-        {qr && <img src={qr} alt="Zawiya Books Instagram QR code" style={{ width: "24mm", height: "24mm" }} />}
+        {qr && <img src={qr} alt="Zawiya Books Instagram QR code" style={{ width: "18mm", height: "18mm" }} />}
       </div>
     </div>
   );
