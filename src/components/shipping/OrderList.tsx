@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Pencil, Trash2 } from "lucide-react";
-import type { Order } from "@/lib/shipping/types";
+import { orderTotals, type Order } from "@/lib/shipping/types";
 
 export function OrderList({
   orders,
