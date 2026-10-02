@@ -15,6 +15,7 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { Printer, FileDown } from "lucide-react";
+import { SheetImport } from "@/components/shipping/SheetImport";
 import { ManualOrderForm } from "@/components/shipping/ManualOrderForm";
 import { OrderList } from "@/components/shipping/OrderList";
 import { LabelPreview } from "@/components/shipping/LabelPreview";
@@ -65,6 +66,7 @@ function App() {
   const [generated, setGenerated] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [formKey, setFormKey] = useState(0);
   const [history, setHistory] = useState<LabelBatch<Order>[]>([]);
   const [viewBatch, setViewBatch] = useState<string | null>(null);
 
@@ -179,7 +181,8 @@ function App() {
         </section>
 
         <Section title="Add Order" step="1">
-          <ManualOrderForm onAdd={addOrder} />
+          <SheetImport onAdd={addOrder} onDone={() => setFormKey((k) => k + 1)} />
+          <ManualOrderForm key={formKey} onAdd={addOrder} />
         </Section>
 
         <Section

@@ -37,7 +37,7 @@ function drawLabel(
   const pad = 5;
   const innerW = LABEL_W - pad * 2;
   const left = x + pad;
-  let cursor = y + pad + 4;
+  let cursor = y + pad + 4 + 30; // 3 cm blank space on top
 
   doc.setDrawColor(0);
   doc.setLineWidth(0.5);
@@ -59,7 +59,7 @@ function drawLabel(
   cursor += 2.5;
   doc.setLineWidth(0.3);
   doc.line(left, cursor, x + LABEL_W - pad, cursor);
-  cursor += 5;
+  cursor += 4;
 
   // FROM
   doc.setFont("helvetica", "bold");
@@ -82,7 +82,7 @@ function drawLabel(
   cursor += 3.5;
   doc.setLineWidth(0.3);
   doc.line(left, cursor, x + LABEL_W - pad, cursor);
-  cursor += 5.5;
+  cursor += 4;
 
   // TO
   doc.setFont("helvetica", "bold");
@@ -105,14 +105,14 @@ function drawLabel(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.text(`PIN: ${order.pin}`, left, cursor);
-  cursor += 5;
+  cursor += 4;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.text(`Mobile: ${order.mobile || "-"}`, left, cursor);
   cursor += 3.5;
   doc.setLineWidth(0.3);
   doc.line(left, cursor, x + LABEL_W - pad, cursor);
-  cursor += 5;
+  cursor += 4;
 
   // Order details
   doc.setFontSize(7.5);
@@ -129,16 +129,16 @@ function drawLabel(
   doc.setFont("helvetica", "normal");
 
   // Thank-you note and Instagram QR anchored to the bottom
-  const trackTop = y + LABEL_H - 30;
+  const trackTop = y + LABEL_H - 22;
   doc.setLineWidth(0.3);
   doc.line(left, trackTop, x + LABEL_W - pad, trackTop);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  doc.text("Thank you for shopping with Zawiya Books!", left, trackTop + 7, { maxWidth: innerW - 25 });
+  doc.text("Thank you for shopping with Zawiya Books!", left, trackTop + 7, { maxWidth: innerW - 20 });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
-  doc.text("Scan to visit us on Instagram", left, trackTop + 13);
-  if (qr) doc.addImage(qr, "PNG", x + LABEL_W - pad - 24, trackTop + 3, 24, 24);
+  doc.text("Scan to visit us on Instagram", left, trackTop + 12);
+  if (qr) doc.addImage(qr, "PNG", x + LABEL_W - pad - 18, trackTop + 2, 18, 18);
 }
 
 export async function buildLabelsPdf(orders: Order[], sender: Sender): Promise<jsPDF> {
