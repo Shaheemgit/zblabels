@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { INSTAGRAM_URL, LABELS_PER_PAGE, qrDataUrl } from "@/lib/shipping/pdf";
-import { senderLines, type Order, type Sender } from "@/lib/shipping/types";
+import { amountText, senderLines, type Order, type Sender } from "@/lib/shipping/types";
 
 function chunk<T>(items: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -141,7 +141,9 @@ function LabelCard({
         <div>Order ID: {order.orderId}</div>
         <div>Book: {order.book || "-"}</div>
         <div>
-          Quantity: {order.qty} &nbsp;&nbsp; {order.payment === "COD" ? "COD amount" : "Amount"}: ₹{order.amount}
+          Quantity: {order.qty}</div>
+        <div style={{ fontWeight: 700 }}>
+          {order.payment === "COD" ? "COD amount" : "Amount"}: {amountText(order)}
         </div>
       </div>
 

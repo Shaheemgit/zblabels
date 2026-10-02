@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Order } from "@/lib/shipping/types";
+import { amountText, type Order } from "@/lib/shipping/types";
 import {
   DEFAULT_BOOK,
   DEFAULT_POST,
@@ -214,8 +214,11 @@ export function ManualOrderForm({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Quantity" value={draft.qty} onChange={set("qty")} numeric />
-          <Field label="Amount" value={draft.amount} onChange={set("amount")} numeric />
+          <Field label="Book Price" value={draft.amount} onChange={set("amount")} numeric />
         </div>
+        <p className="text-sm text-muted-foreground sm:col-span-2">
+          Total: {amountText({ amount: Number.parseFloat(draft.amount) || 0, payment: draft.payment })}
+        </p>
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
       <Button

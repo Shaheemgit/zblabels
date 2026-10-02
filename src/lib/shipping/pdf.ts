@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
-import { senderLines, type Order, type Sender } from "./types";
+import { amountText, senderLines, type Order, type Sender } from "./types";
 
 export const LABELS_PER_PAGE = 4;
 export const INSTAGRAM_URL = "https://www.instagram.com/zawiya_books/";
@@ -122,7 +122,11 @@ function drawLabel(
     doc.text(w, left, cursor);
     cursor += 3.4;
   }
-  doc.text(`Quantity: ${order.qty}    ${order.payment === "COD" ? "COD amount" : "Amount"}: Rs. ${order.amount}`, left, cursor);
+  doc.text(`Quantity: ${order.qty}`, left, cursor);
+  cursor += 3.4;
+  doc.setFont("helvetica", "bold");
+  doc.text(`${order.payment === "COD" ? "COD amount" : "Amount"}: ${amountText(order, "Rs. ")}`, left, cursor, { maxWidth: innerW - 2 });
+  doc.setFont("helvetica", "normal");
 
   // Thank-you note and Instagram QR anchored to the bottom
   const trackTop = y + LABEL_H - 30;
