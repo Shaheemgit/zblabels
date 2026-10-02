@@ -21,6 +21,9 @@ import { LabelPreview } from "@/components/shipping/LabelPreview";
 import { buildLabelsPdf, pdfFileName } from "@/lib/shipping/pdf";
 import {
   loadGeneratedCount,
+  loadHistory,
+  saveHistory,
+  type LabelBatch,
   loadOrders,
   loadSelected,
   loadSender,
@@ -62,10 +65,13 @@ function App() {
   const [generated, setGenerated] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [history, setHistory] = useState<LabelBatch<Order>[]>([]);
+  const [viewBatch, setViewBatch] = useState<string | null>(null);
 
   useEffect(() => {
     setSender(loadSender());
     setGenerated(loadGeneratedCount());
+    setHistory(loadHistory<Order>());
     const savedOrders = loadOrders<Order>();
     setOrders(savedOrders);
     const savedSelected = loadSelected();
@@ -102,9 +108,28 @@ function App() {
     return selectedOrders;
   }
 
+  function recordBatch(ready: Order[]) {
+    const batch = { id: newId(), createdAt: new Date().toISOString(), orders: ready };
+    setHistory((prev) => {
+      const next = [batch, ...prev].slice(0, 50);
+      saveHistory(next);
+      return next;
+    });
+  }
+
+  async function redownload(batch: LabelBatch<Order>) {
+    try {
+      const doc = await buildLabelsPdf(batch.orders, sender);
+      doc.save(pdfFileName(batch.orders.length));
+    } catch {
+      toast.error("The PDF could not be created. Please try again.");
+    }
+  }
+
   async function downloadPdf() {
     const ready = guardLabels();
     if (!ready) return;
+    recordBatch(ready);
     setBusy(true);
     try {
       const doc = await buildLabelsPdf(ready, sender);
@@ -123,6 +148,7 @@ function App() {
   function printLabels() {
     const ready = guardLabels();
     if (!ready) return;
+    recordBatch(ready);
     setShowPreview(true);
     window.setTimeout(() => window.print(), 300);
   }
@@ -245,6 +271,50 @@ function App() {
           )}
         </Section>
 
+        <Section title="Previous Labels" step="4">
+          {history.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Labels you download or print will appear here.</p>
+          ) : (
+            <div className="space-y-2">
+              {history.map((b) => (
+                <div key={b.id} className="rounded-md border p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium">
+                        {new Date(b.createdAt).toLocaleString()} · {b.orders.length} label{b.orders.length === 1 ? "" : "s"}
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {b.orders.map((o) => `${o.orderId} ${o.customer}`).join(", ")}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setViewBatch(viewBatch === b.id ? null : b.id)}>
+                        {viewBatch === b.id ? "Hide" : "View"}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => redownload(b)}>PDF</Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          const next = history.filter((x) => x.id !== b.id);
+                          setHistory(next);
+                          saveHistory(next);
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                  {viewBatch === b.id && (
+                    <div className="mt-3">
+                      <LabelPreview orders={b.orders} sender={sender} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
       </main>
 
       {showPreview && selectedOrders.length > 0 && (

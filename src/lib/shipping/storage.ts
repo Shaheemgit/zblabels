@@ -110,3 +110,20 @@ export function saveDraft(draft: unknown) {
 export function clearDraft() {
   if (typeof window !== "undefined") window.localStorage.removeItem(DRAFT_KEY);
 }
+
+const HISTORY_KEY = "zawiya.history";
+
+export type LabelBatch<T> = { id: string; createdAt: string; orders: T[] };
+
+export function loadHistory<T>(): LabelBatch<T>[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(window.localStorage.getItem(HISTORY_KEY) || "[]") as LabelBatch<T>[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveHistory(batches: unknown[]) {
+  if (typeof window !== "undefined") window.localStorage.setItem(HISTORY_KEY, JSON.stringify(batches));
+}

@@ -50,3 +50,15 @@ export function senderLines(s: Sender): string[] {
   ];
   return parts.map((p) => p.trim()).filter(Boolean);
 }
+
+export const DELIVERY_CHARGE = { Prepaid: 39, COD: 44 } as const;
+
+export function orderTotals(o: Pick<Order, "amount" | "payment">) {
+  const delivery = DELIVERY_CHARGE[o.payment] ?? 0;
+  return { book: o.amount, delivery, total: o.amount + delivery };
+}
+
+export function amountText(o: Pick<Order, "amount" | "payment">, rupee = "₹") {
+  const t = orderTotals(o);
+  return `${rupee}${t.book} + ${rupee}${t.delivery} delivery = ${rupee}${t.total}`;
+}
