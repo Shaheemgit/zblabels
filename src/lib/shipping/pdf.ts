@@ -59,7 +59,7 @@ function drawLabel(
   cursor += 2.5;
   doc.setLineWidth(0.3);
   doc.line(left, cursor, x + LABEL_W - pad, cursor);
-  cursor += 5;
+  cursor += 4;
 
   // FROM
   doc.setFont("helvetica", "bold");
@@ -82,7 +82,7 @@ function drawLabel(
   cursor += 3.5;
   doc.setLineWidth(0.3);
   doc.line(left, cursor, x + LABEL_W - pad, cursor);
-  cursor += 5.5;
+  cursor += 4;
 
   // TO
   doc.setFont("helvetica", "bold");
@@ -105,14 +105,14 @@ function drawLabel(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.text(`PIN: ${order.pin}`, left, cursor);
-  cursor += 5;
+  cursor += 4;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.text(`Mobile: ${order.mobile || "-"}`, left, cursor);
   cursor += 3.5;
   doc.setLineWidth(0.3);
   doc.line(left, cursor, x + LABEL_W - pad, cursor);
-  cursor += 5;
+  cursor += 4;
 
   // Order details
   doc.setFontSize(7.5);

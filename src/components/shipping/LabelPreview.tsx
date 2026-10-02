@@ -114,7 +114,7 @@ function LabelCard({
         </div>
       </div>
 
-      <div style={{ marginTop: "3mm", paddingBottom: "2mm", borderBottom: "0.3mm solid #000" }}>
+      <div style={{ marginTop: "1.5mm", paddingBottom: "1.2mm", borderBottom: "0.3mm solid #000" }}>
         <div style={{ fontSize: "6.5pt", fontWeight: 700, letterSpacing: "0.1em" }}>FROM</div>
         <div style={{ fontSize: "8pt", fontWeight: 700 }}>{sender.name || "-"}</div>
         <div style={{ fontSize: "7pt", lineHeight: 1.35 }}>
@@ -125,7 +125,7 @@ function LabelCard({
         </div>
       </div>
 
-      <div style={{ marginTop: "3mm", paddingBottom: "2mm", borderBottom: "0.3mm solid #000" }}>
+      <div style={{ marginTop: "1.5mm", paddingBottom: "1.2mm", borderBottom: "0.3mm solid #000" }}>
         <div style={{ fontSize: "7.5pt", fontWeight: 700, letterSpacing: "0.1em" }}>TO</div>
         <div style={{ fontSize: "13pt", fontWeight: 700, lineHeight: 1.15, marginTop: "1mm" }}>
           {order.customer}
@@ -137,7 +137,7 @@ function LabelCard({
         <div style={{ fontSize: "9pt" }}>Mobile: {order.mobile || "-"}</div>
       </div>
 
-      <div style={{ marginTop: "3mm", fontSize: "7.5pt", lineHeight: 1.4 }}>
+      <div style={{ marginTop: "1.5mm", fontSize: "7.5pt", lineHeight: 1.4 }}>
         <div>Order ID: {order.orderId}</div>
         <div>Book: {order.book || "-"}</div>
         <div>
@@ -151,7 +151,7 @@ function LabelCard({
         style={{
           marginTop: "auto",
           borderTop: "0.3mm solid #000",
-          paddingTop: "2mm",
+          paddingTop: "1.2mm",
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "space-between",
