@@ -35,7 +35,7 @@ function loadImported(): string[] {
   try { return JSON.parse(localStorage.getItem(IMPORTED_KEY) || "[]"); } catch { return []; }
 }
 
-export function SheetImport({ onAdd }: { onAdd: (o: Omit<Order, "id">) => void }) {
+export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) => void; onDone: () => void }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -86,7 +86,8 @@ export function SheetImport({ onAdd }: { onAdd: (o: Omit<Order, "id">) => void }
     localStorage.setItem(IMPORTED_KEY, JSON.stringify([...loadImported(), ...chosen.map((r) => r.key)]));
     setRows(rows.filter((r) => !picked.includes(r.key)));
     setPicked([]);
-    toast.success(`${chosen.length} order${chosen.length === 1 ? "" : "s"} imported — refresh the page form to see the next Order ID`);
+    onDone();
+    toast.success(`${chosen.length} order${chosen.length === 1 ? "" : "s"} imported`);
   }
 
   return (
