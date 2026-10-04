@@ -27,14 +27,14 @@ export function whatsappHref(order: Order): string {
   const digits = order.mobile.replace(/\D/g, "");
   const to = digits.length === 10 ? `91${digits}` : digits;
   const lines = [
-    `Hi ${order.customer},`,
+    `നമസ്കാരം ${order.customer},`,
     ``,
-    `Your order ${order.orderId} (${order.book} x ${order.qty}) is processed and ready to dispatch.`,
+    `നിങ്ങളുടെ ഓർഡർ ${order.orderId} (${order.book} × ${order.qty}) തയ്യാറായി. വൈകാതെ അയച്ചുതരുന്നതാണ്.`,
   ];
   if (order.payment === "Prepaid") {
-    lines.push(``, `You can pay using this payment link:`, paymentLink(order.payment));
+    lines.push(``, `പേയ്മെന്റ് ഈ ലിങ്ക് ഉപയോഗിച്ച് ചെയ്യാം:`, paymentLink(order.payment));
   } else {
-    lines.push(``, `Payment will be collected on delivery.`);
+    lines.push(``, `പേയ്മെന്റ് ഡെലിവറി സമയത്ത് നൽകാം.`);
   }
   return `https://wa.me/${to}?text=${encodeURIComponent(lines.join("\n"))}`;
 }
