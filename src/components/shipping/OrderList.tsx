@@ -12,8 +12,32 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2 } from "lucide-react";
+import { MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { orderTotals, type Order } from "@/lib/shipping/types";
+
+const UPI_ID = "8921291146@ptsbi";
+const PAYEE_NAME = "Zawiya Books";
+const PAYMENT_AMOUNT = { Prepaid: 290, COD: 295 } as const;
+
+function paymentLink(payment: Order["payment"]): string {
+  return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${PAYMENT_AMOUNT[payment]}&cu=INR`;
+}
+
+export function whatsappHref(order: Order): string {
+  const digits = order.mobile.replace(/\D/g, "");
+  const to = digits.length === 10 ? `91${digits}` : digits;
+  const lines = [
+    `Hi ${order.customer},`,
+    ``,
+    `Your order ${order.orderId} (${order.book} x ${order.qty}) is processed and ready to dispatch.`,
+  ];
+  if (order.payment === "Prepaid") {
+    lines.push(``, `You can pay using this payment link:`, paymentLink(order.payment));
+  } else {
+    lines.push(``, `Payment will be collected on delivery.`);
+  }
+  return `https://wa.me/${to}?text=${encodeURIComponent(lines.join("\n"))}`;
+}
 
 export function OrderList({
   orders,
@@ -98,6 +122,14 @@ export function OrderList({
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Send WhatsApp message"
+                    onClick={() => window.open(whatsappHref(order), "_blank")}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
                   <Button
                     size="icon"
                     variant="ghost"
