@@ -14,7 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      label_batches: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          orders: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          orders?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          orders?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          address: string
+          amount: number
+          book: string
+          created_at: string
+          customer: string
+          id: string
+          mobile: string
+          order_id: string
+          payment: string
+          pin: string
+          post: string
+          qty: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          amount?: number
+          book: string
+          created_at?: string
+          customer: string
+          id?: string
+          mobile: string
+          order_id: string
+          payment?: string
+          pin: string
+          post?: string
+          qty?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          amount?: number
+          book?: string
+          created_at?: string
+          customer?: string
+          id?: string
+          mobile?: string
+          order_id?: string
+          payment?: string
+          pin?: string
+          post?: string
+          qty?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
