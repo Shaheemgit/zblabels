@@ -125,6 +125,14 @@ export function OrderList({
                   <Button
                     size="icon"
                     variant="ghost"
+                    aria-label="Send WhatsApp message"
+                    onClick={() => window.open(whatsappHref(order), "_blank")}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
                     aria-label="Edit order"
                     onClick={() => setEditing(order)}
                   >
