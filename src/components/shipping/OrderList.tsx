@@ -27,7 +27,7 @@ export function whatsappHref(order: Order): string {
   const digits = order.mobile.replace(/\D/g, "");
   const to = digits.length === 10 ? `91${digits}` : digits;
   const lines = [
-    `നമസ്കാരം ${order.customer},`,
+    `ഓർഡർ ചെയ്തതിന് നന്ദി ${order.customer},`,
     ``,
     `നിങ്ങളുടെ ഓർഡർ ${order.orderId} (${order.book} × ${order.qty}) തയ്യാറായി. വൈകാതെ അയച്ചുതരുന്നതാണ്.`,
   ];
