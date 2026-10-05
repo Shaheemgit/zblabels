@@ -12,32 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { MessageCircle, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { orderTotals, type Order } from "@/lib/shipping/types";
-
-const UPI_ID = "8921291146@ptsbi";
-const PAYEE_NAME = "Zawiya Books";
-const PAYMENT_AMOUNT = { Prepaid: 290, COD: 295 } as const;
-
-function paymentLink(payment: Order["payment"]): string {
-  return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${PAYMENT_AMOUNT[payment]}&cu=INR`;
-}
-
-export function whatsappHref(order: Order): string {
-  const digits = order.mobile.replace(/\D/g, "");
-  const to = digits.length === 10 ? `91${digits}` : digits;
-  const lines = [
-    `ഓർഡർ ചെയ്തതിന് നന്ദി ${order.customer},`,
-    ``,
-    `നിങ്ങളുടെ ഓർഡർ ${order.orderId} (${order.book} × ${order.qty}) തയ്യാറായി. വൈകാതെ അയച്ചുതരുന്നതാണ്.`,
-  ];
-  if (order.payment === "Prepaid") {
-    lines.push(``, `പേയ്മെന്റ് ഈ ലിങ്ക് ഉപയോഗിച്ച് ചെയ്യാം:`, paymentLink(order.payment));
-  } else {
-    lines.push(``, `പേയ്മെന്റ് ഡെലിവറി സമയത്ത് നൽകാം.`);
-  }
-  return `https://wa.me/${to}?text=${encodeURIComponent(lines.join("\n"))}`;
-}
 
 export function OrderList({
   orders,
