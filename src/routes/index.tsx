@@ -33,6 +33,19 @@ import {
   saveSelected,
 } from "@/lib/shipping/storage";
 import { emptySender, senderIsComplete, type Order, type Sender } from "@/lib/shipping/types";
+import { useAuth } from "@/hooks/useAuth";
+import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  clearOrders,
+  deleteBatch,
+  deleteOrder,
+  fetchBatches,
+  fetchOrders,
+  insertBatch,
+  insertOrder,
+  updateOrder,
+} from "@/lib/shipping/cloud";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -56,10 +69,12 @@ export const Route = createFileRoute("/")({
   component: App,
 });
 
-let counter = 0;
-const newId = () => `o${Date.now()}-${counter++}`;
+const isUuid = (s: string) => /^[0-9a-f-]{36}$/i.test(s);
+const newId = () => crypto.randomUUID();
+const cloudErr = () => toast.error("Could not save to your account. Please try again.");
 
 function App() {
+  const { session, userId } = useAuth();
   const [sender, setSender] = useState<Sender>(emptySender);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -81,6 +96,32 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      try {
+        let cloudOrders = await fetchOrders();
+        if (cloudOrders.length === 0) {
+          const local = loadOrders<Order>().map((o) => (isUuid(o.id) ? o : { ...o, id: newId() }));
+          for (const o of local) await insertOrder(o, userId);
+          cloudOrders = local;
+        }
+        let batches = await fetchBatches();
+        if (batches.length === 0) {
+          const local = loadHistory<Order>().map((b) => (isUuid(b.id) ? b : { ...b, id: newId() }));
+          for (const b of local) await insertBatch(b, userId);
+          batches = local;
+        }
+        setOrders(cloudOrders);
+        setSelected((prev) => prev.filter((id) => cloudOrders.some((o) => o.id === id)));
+        setHistory(batches);
+        saveHistory(batches);
+      } catch {
+        toast.error("Could not load your saved data.");
+      }
+    })();
+  }, [userId]);
+
+  useEffect(() => {
     saveOrders(orders);
   }, [orders]);
 
@@ -96,6 +137,7 @@ function App() {
     const created = { ...order, id: newId() };
     setOrders((prev) => [...prev, created]);
     setSelected((prev) => [...prev, created.id]);
+    if (userId) insertOrder(created, userId).catch(cloudErr);
   }
 
   function guardLabels(): Order[] | null {
@@ -117,6 +159,7 @@ function App() {
       saveHistory(next);
       return next;
     });
+    if (userId) insertBatch(batch, userId).catch(cloudErr);
   }
 
   async function redownload(batch: LabelBatch<Order>) {
@@ -160,9 +203,34 @@ function App() {
       <Toaster />
 
       <header className="border-b print:hidden">
-        <div className="mx-auto max-w-3xl px-4 py-4">
-          <h1 className="truncate text-xl font-semibold tracking-tight">Zawiya Books</h1>
-          <p className="text-sm text-muted-foreground">Shipping Label Generator</p>
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-4">
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-semibold tracking-tight">Zawiya Books</h1>
+            <p className="text-sm text-muted-foreground">Shipping Label Generator</p>
+          </div>
+          {session ? (
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="hidden truncate text-xs text-muted-foreground sm:inline">
+                {session.user.email}
+              </span>
+              <Button variant="outline" size="sm" onClick={() => supabase.auth.signOut()}>
+                Sign out
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                const r = await lovable.auth.signInWithOAuth("google", {
+                  redirect_uri: window.location.origin,
+                });
+                if (r.error) toast.error("Google sign-in failed. Please try again.");
+              }}
+            >
+              Sign in with Google
+            </Button>
+          )}
         </div>
       </header>
 
@@ -210,6 +278,7 @@ function App() {
                         setOrders([]);
                         setSelected([]);
                         setShowPreview(false);
+                        if (userId) clearOrders().catch(cloudErr);
                         toast.success("All orders cleared");
                       }}
                     >
@@ -230,12 +299,14 @@ function App() {
               )
             }
             onToggleAll={(checked) => setSelected(checked ? orders.map((o) => o.id) : [])}
-            onUpdate={(updated) =>
-              setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)))
-            }
+            onUpdate={(updated) => {
+              setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+              if (userId) updateOrder(updated).catch(cloudErr);
+            }}
             onDelete={(id) => {
               setOrders((prev) => prev.filter((o) => o.id !== id));
               setSelected((prev) => prev.filter((x) => x !== id));
+              if (userId) deleteOrder(id).catch(cloudErr);
             }}
           />
         </Section>
@@ -302,6 +373,7 @@ function App() {
                           const next = history.filter((x) => x.id !== b.id);
                           setHistory(next);
                           saveHistory(next);
+                          if (userId) deleteBatch(b.id).catch(cloudErr);
                         }}
                       >
                         Delete
