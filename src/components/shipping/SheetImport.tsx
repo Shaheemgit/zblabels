@@ -47,10 +47,15 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
       if (!res.ok) throw new Error();
       const [head = [], ...body] = parseCsv(await res.text());
       const col = (word: string) => head.findIndex((h) => h.toLowerCase().includes(word));
-      const ix = { t: col("timestamp"), n: col("name"), a: col("adress") >= 0 ? col("adress") : col("address"), p: col("pin"), m: col("mobile"), q: col("quantity"), pay: col("payment") };
+      const ix = { t: col("timestamp"), n: col("name"), a: col("adress") >= 0 ? col("adress") : col("address"), p: col("pin"), m: col("mobile"), q: col("quantity"), pay: col("payment option"), st: col("payment status") };
       const done = loadImported();
       const parsed = body
         .filter((r) => r.some((c) => c.trim()))
+        .filter((r) => {
+          const s = (r[ix.st] ?? "").toLowerCase();
+          if (/pending/.test(s)) return false;
+          return /rec(ei|ie)ved|cod|cash/.test(s);
+        })
         .map((r) => ({
           key: `${r[ix.t] ?? ""}|${r[ix.m] ?? ""}`,
           customer: (r[ix.n] ?? "").trim(),
@@ -58,7 +63,7 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
           pin: (r[ix.p] ?? "").replace(/\D/g, ""),
           mobile: (r[ix.m] ?? "").trim(),
           qty: Number.parseInt(r[ix.q] ?? "1", 10) || 1,
-          payment: /cod|cash/i.test(r[ix.pay] ?? "") ? ("COD" as const) : ("Prepaid" as const),
+          payment: /^cod$/i.test((r[ix.st] ?? "").trim()) || /cash/i.test(r[ix.pay] ?? "") ? ("COD" as const) : ("Prepaid" as const),
         }))
         .filter((r) => !done.includes(r.key));
       setRows(parsed);
