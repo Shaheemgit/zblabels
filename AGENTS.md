@@ -10,3 +10,5 @@
 <!-- LOVABLE:END -->
 
 Shipping labels are generated entirely in the browser, with sender details and the generated count stored locally; this keeps the internal tool usable without accounts or a backend.
+
+- Signed-in users sync orders and label history to the backend (owner-only rows); browser storage remains the cache and works signed-out. Why: cross-device access via Google login.
