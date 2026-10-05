@@ -51,6 +51,11 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
       const done = loadImported();
       const parsed = body
         .filter((r) => r.some((c) => c.trim()))
+        .filter((r) => {
+          const s = (r[ix.pay] ?? "").toLowerCase();
+          if (/pending/.test(s)) return false;
+          return /rec(ei|ie)ved|cod|cash/.test(s);
+        })
         .map((r) => ({
           key: `${r[ix.t] ?? ""}|${r[ix.m] ?? ""}`,
           customer: (r[ix.n] ?? "").trim(),
