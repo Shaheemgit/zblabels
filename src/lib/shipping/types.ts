@@ -51,14 +51,14 @@ export function senderLines(s: Sender): string[] {
   return parts.map((p) => p.trim()).filter(Boolean);
 }
 
-export const DELIVERY_CHARGE = { Prepaid: 39, COD: 44 } as const;
+export const PRICE_TOTAL = { Prepaid: 290, COD: 295 } as const;
 
 export function orderTotals(o: Pick<Order, "amount" | "payment">) {
-  const delivery = DELIVERY_CHARGE[o.payment] ?? 0;
-  return { book: o.amount, delivery, total: o.amount + delivery };
+  const total = PRICE_TOTAL[o.payment] ?? o.amount;
+  return { book: total, delivery: 0, total };
 }
 
 export function amountText(o: Pick<Order, "amount" | "payment">, rupee = "₹") {
   const t = orderTotals(o);
-  return `${rupee}${t.book} + ${rupee}${t.delivery} delivery = ${rupee}${t.total}`;
+  return `${rupee}${t.total} · Free delivery`;
 }
