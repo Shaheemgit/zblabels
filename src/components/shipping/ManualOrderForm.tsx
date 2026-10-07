@@ -130,7 +130,7 @@ export function ManualOrderForm({
         />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="PIN Code" value={draft.pin} onChange={set("pin")} numeric />
+        <Field label="PIN / Postal Code" value={draft.pin} onChange={set("pin")} />
         <Field label="Mobile Number" value={draft.mobile} onChange={set("mobile")} numeric />
         <div className="space-y-1.5">
           <Label htmlFor="m-book">Book Name</Label>
@@ -230,8 +230,8 @@ export function ManualOrderForm({
               ? "Customer name is required"
               : !draft.address.trim()
                 ? "Address is required"
-                : !/^\d{6}$/.test(draft.pin.trim())
-                  ? "PIN code is required"
+                : !draft.pin.trim()
+                  ? "PIN / postal code is required"
                   : null;
           if (problem) {
             toast.error(problem);

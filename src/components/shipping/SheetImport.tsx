@@ -6,7 +6,7 @@ import type { Order } from "@/lib/shipping/types";
 import { DEFAULT_BOOK, DEFAULT_POST, commitOrderSeq, formatOrderId, peekOrderSeq } from "@/lib/shipping/storage";
 
 const SHEET_CSV =
-  "https://docs.google.com/spreadsheets/d/1ztsAyFwgY6QXAy9go86qeZ4CaQT0jWslq6qEYTulXBM/gviz/tq?tqx=out:csv&gid=186275945";
+  "https://docs.google.com/spreadsheets/d/1BHmOMe0iO9h_D8wmcq99nLVswPxYc3SBDhNc65yxCuM/gviz/tq?tqx=out:csv&gid=656136269";
 const IMPORTED_KEY = "zawiya.sheetImported";
 
 type Row = { key: string; customer: string; address: string; pin: string; mobile: string; qty: number; payment: "Prepaid" | "COD" };
@@ -60,7 +60,7 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
           key: `${r[ix.t] ?? ""}|${r[ix.m] ?? ""}`,
           customer: (r[ix.n] ?? "").trim(),
           address: (r[ix.a] ?? "").trim(),
-          pin: (r[ix.p] ?? "").replace(/\D/g, ""),
+          pin: (r[ix.p] ?? "").trim(),
           mobile: (r[ix.m] ?? "").trim(),
           qty: Number.parseInt(r[ix.q] ?? "1", 10) || 1,
           payment: /^cod$/i.test((r[ix.st] ?? "").trim()) || /cash/i.test(r[ix.pay] ?? "") ? ("COD" as const) : ("Prepaid" as const),
