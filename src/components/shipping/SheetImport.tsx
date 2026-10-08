@@ -6,7 +6,7 @@ import type { Order } from "@/lib/shipping/types";
 import { DEFAULT_BOOK, DEFAULT_POST, commitOrderSeq, formatOrderId, peekOrderSeq } from "@/lib/shipping/storage";
 
 const SHEET_CSV =
-  "https://docs.google.com/spreadsheets/d/1BHmOMe0iO9h_D8wmcq99nLVswPxYc3SBDhNc65yxCuM/gviz/tq?tqx=out:csv&gid=656136269";
+  "https://docs.google.com/spreadsheets/d/1sJYQWIp-penJYTU9mGLRGe9bVIEHnRYhP0hmrPTS09I/gviz/tq?tqx=out:csv&gid=2082984115";
 const IMPORTED_KEY = "zawiya.sheetImported";
 
 type Row = { key: string; customer: string; address: string; pin: string; mobile: string; qty: number; payment: "Prepaid" | "COD" };
@@ -47,15 +47,20 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
       if (!res.ok) throw new Error();
       const [head = [], ...body] = parseCsv(await res.text());
       const col = (word: string) => head.findIndex((h) => h.toLowerCase().includes(word));
-      const ix = { t: col("timestamp"), n: col("name"), a: col("adress") >= 0 ? col("adress") : col("address"), p: col("pin"), m: col("mobile"), q: col("quantity"), pay: col("payment option"), st: col("payment status") };
+      const phone = col("mobile") >= 0 ? col("mobile") : col("whatsapp") >= 0 ? col("whatsapp") : col("contact");
+      const ix = { t: col("timestamp"), n: col("name"), a: col("adress") >= 0 ? col("adress") : col("address"), p: col("pin"), m: phone, q: col("quantity"), pay: col("payment option"), st: col("payment status") };
       const done = loadImported();
+      const payOf = (r: string[]): "COD" | "Prepaid" | null => {
+        const s = (r[ix.st] ?? "").toLowerCase();
+        const p = (r[ix.pay] ?? "").toLowerCase();
+        if (/pending/.test(s)) return null;
+        if (/\bcod\b|cash/.test(s) || /cash on delivery|\bcod\b/.test(p)) return "COD";
+        if (/rec(ei|ie)ved/.test(s) || /upi|gpay|paytm|phonepay/.test(p)) return "Prepaid";
+        return null;
+      };
       const parsed = body
         .filter((r) => r.some((c) => c.trim()))
-        .filter((r) => {
-          const s = (r[ix.st] ?? "").toLowerCase();
-          if (/pending/.test(s)) return false;
-          return /rec(ei|ie)ved|cod|cash/.test(s);
-        })
+        .filter((r) => payOf(r) !== null)
         .map((r) => ({
           key: `${r[ix.t] ?? ""}|${r[ix.m] ?? ""}`,
           customer: (r[ix.n] ?? "").trim(),
@@ -63,7 +68,7 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
           pin: (r[ix.p] ?? "").trim(),
           mobile: (r[ix.m] ?? "").trim(),
           qty: Number.parseInt(r[ix.q] ?? "1", 10) || 1,
-          payment: /^cod$/i.test((r[ix.st] ?? "").trim()) || /cash/i.test(r[ix.pay] ?? "") ? ("COD" as const) : ("Prepaid" as const),
+          payment: payOf(r) ?? ("Prepaid" as const),
         }))
         .filter((r) => !done.includes(r.key));
       setRows(parsed);
