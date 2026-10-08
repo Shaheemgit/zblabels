@@ -6,7 +6,7 @@ import type { Order } from "@/lib/shipping/types";
 import { DEFAULT_BOOK, DEFAULT_POST, commitOrderSeq, formatOrderId, peekOrderSeq } from "@/lib/shipping/storage";
 
 const SHEET_CSV =
-  "https://docs.google.com/spreadsheets/d/1BHmOMe0iO9h_D8wmcq99nLVswPxYc3SBDhNc65yxCuM/gviz/tq?tqx=out:csv&gid=656136269";
+  "https://docs.google.com/spreadsheets/d/1sJYQWIp-penJYTU9mGLRGe9bVIEHnRYhP0hmrPTS09I/gviz/tq?tqx=out:csv&gid=2082984115";
 const IMPORTED_KEY = "zawiya.sheetImported";
 
 type Row = { key: string; customer: string; address: string; pin: string; mobile: string; qty: number; payment: "Prepaid" | "COD" };
