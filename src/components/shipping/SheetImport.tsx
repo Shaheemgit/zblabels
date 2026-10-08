@@ -47,7 +47,8 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
       if (!res.ok) throw new Error();
       const [head = [], ...body] = parseCsv(await res.text());
       const col = (word: string) => head.findIndex((h) => h.toLowerCase().includes(word));
-      const ix = { t: col("timestamp"), n: col("name"), a: col("adress") >= 0 ? col("adress") : col("address"), p: col("pin"), m: col("mobile"), q: col("quantity"), pay: col("payment option"), st: col("payment status") };
+      const phone = col("mobile") >= 0 ? col("mobile") : col("whatsapp") >= 0 ? col("whatsapp") : col("contact");
+      const ix = { t: col("timestamp"), n: col("name"), a: col("adress") >= 0 ? col("adress") : col("address"), p: col("pin"), m: phone, q: col("quantity"), pay: col("payment option"), st: col("payment status") };
       const done = loadImported();
       const parsed = body
         .filter((r) => r.some((c) => c.trim()))
