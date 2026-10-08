@@ -50,13 +50,17 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
       const phone = col("mobile") >= 0 ? col("mobile") : col("whatsapp") >= 0 ? col("whatsapp") : col("contact");
       const ix = { t: col("timestamp"), n: col("name"), a: col("adress") >= 0 ? col("adress") : col("address"), p: col("pin"), m: phone, q: col("quantity"), pay: col("payment option"), st: col("payment status") };
       const done = loadImported();
+      const payOf = (r: string[]): "COD" | "Prepaid" | null => {
+        const s = (r[ix.st] ?? "").toLowerCase();
+        const p = (r[ix.pay] ?? "").toLowerCase();
+        if (/pending/.test(s)) return null;
+        if (/\bcod\b|cash/.test(s) || /cash on delivery|\bcod\b/.test(p)) return "COD";
+        if (/rec(ei|ie)ved/.test(s) || /upi|gpay|paytm|phonepay/.test(p)) return "Prepaid";
+        return null;
+      };
       const parsed = body
         .filter((r) => r.some((c) => c.trim()))
-        .filter((r) => {
-          const s = (r[ix.st] ?? "").toLowerCase();
-          if (/pending/.test(s)) return false;
-          return /rec(ei|ie)ved|cod|cash/.test(s);
-        })
+        .filter((r) => payOf(r) !== null)
         .map((r) => ({
           key: `${r[ix.t] ?? ""}|${r[ix.m] ?? ""}`,
           customer: (r[ix.n] ?? "").trim(),
@@ -64,7 +68,7 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
           pin: (r[ix.p] ?? "").trim(),
           mobile: (r[ix.m] ?? "").trim(),
           qty: Number.parseInt(r[ix.q] ?? "1", 10) || 1,
-          payment: /^cod$/i.test((r[ix.st] ?? "").trim()) || /cash/i.test(r[ix.pay] ?? "") ? ("COD" as const) : ("Prepaid" as const),
+          payment: payOf(r) ?? ("Prepaid" as const),
         }))
         .filter((r) => !done.includes(r.key));
       setRows(parsed);
