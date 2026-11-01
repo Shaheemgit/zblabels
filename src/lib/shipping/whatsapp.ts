@@ -25,7 +25,7 @@ export function parseBooks(books: string) {
     .filter(Boolean)
     .map((p) => {
       const m = p.match(/₹\s*([0-9,]+)/);
-      return { name: p.replace(/\s*💰?\s*₹.*$/, "").trim(), price: m ? Number(m[1].replace(/,/g, "")) || 0 : 0 };
+      return { name: p.replace(/\s*💰?\s*₹.*$/, "").trim(), price: m ? Number((m[1] ?? "").replace(/,/g, "")) || 0 : 0 };
     });
 }
 

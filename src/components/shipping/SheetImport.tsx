@@ -7,7 +7,7 @@ import type { Order } from "@/lib/shipping/types";
 import { DEFAULT_BOOK, DEFAULT_POST, commitOrderSeq, formatOrderId, peekOrderSeq } from "@/lib/shipping/storage";
 import { STAGES, stageMessage, waLink, type Stage } from "@/lib/shipping/whatsapp";
 
-type SavedSheet = { name: string; id: string; gid?: string };
+type SavedSheet = { name: string; id: string; gid?: string | undefined };
 const SHEETS_KEY = "zawiya.sheets";
 const ACTIVE_KEY = "zawiya.activeSheet";
 const IMPORTED_KEY = "zawiya.sheetImported";
@@ -44,7 +44,7 @@ function parseCsv(text: string): string[][] {
 
 const read = <T,>(k: string, d: T): T => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 
-export function parseSheetUrl(url: string): { id: string; gid?: string } | null {
+export function parseSheetUrl(url: string): { id: string; gid?: string | undefined } | null {
   const id = url.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1];
   if (!id) return null;
   const gid = url.match(/gid=(\d+)/)?.[1];
@@ -82,14 +82,14 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
 
   function addSheet() {
     const p = parseSheetUrl(newUrl);
-    if (!p) return toast.error("Paste a valid Google Sheet link");
+    if (!p) { toast.error("Paste a valid Google Sheet link"); return; }
     const next = [...sheets, { name: newName.trim() || `Sheet ${sheets.length + 1}`, ...p }];
     saveSheets(next, next.length - 1);
     setNewName(""); setNewUrl(""); setAdding(false);
   }
 
   function removeSheet() {
-    if (sheets.length <= 1) return toast.error("Keep at least one sheet");
+    if (sheets.length <= 1 || !sheet) { toast.error("Keep at least one sheet"); return; }
     if (!confirm(`Remove "${sheet.name}" from the list?`)) return;
     saveSheets(sheets.filter((_, i) => i !== active), 0);
   }
