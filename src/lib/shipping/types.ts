@@ -53,12 +53,23 @@ export function senderLines(s: Sender): string[] {
 
 export const PRICE_TOTAL = { Prepaid: 290, COD: 295 } as const;
 
+export const COD_HANDLING_PCT = 0.02;
+
 export function orderTotals(o: Pick<Order, "amount" | "payment">) {
   const total = PRICE_TOTAL[o.payment] ?? o.amount;
-  return { book: total, delivery: 0, total };
+  // 2% COD handling charge, rounded like the WhatsApp messages (₹295 → ₹6 → ₹301 payable).
+  const codCharge = o.payment === "COD" ? Math.round(total * COD_HANDLING_PCT) : 0;
+  return { book: total, delivery: 0, total, codCharge, payable: total + codCharge };
 }
 
 export function amountText(o: Pick<Order, "amount" | "payment">, rupee = "₹") {
   const t = orderTotals(o);
   return `${rupee}${t.total} · Free delivery`;
+}
+
+export function payableText(o: Pick<Order, "amount" | "payment">, rupee = "₹") {
+  const t = orderTotals(o);
+  return o.payment === "COD" && t.codCharge > 0
+    ? `Total payable: ${rupee}${t.payable} (incl. ${rupee}${t.codCharge} COD charge)`
+    : `Total payable: ${rupee}${t.payable}`;
 }
