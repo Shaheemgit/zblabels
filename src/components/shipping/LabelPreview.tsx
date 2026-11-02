@@ -2,7 +2,13 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { INSTAGRAM_URL, LABELS_PER_PAGE, qrDataUrl } from "@/lib/shipping/pdf";
-import { amountText, senderLines, type Order, type Sender } from "@/lib/shipping/types";
+import { amountText, payableText, senderLines, type Order, type Sender } from "@/lib/shipping/types";
+import { parseBooks } from "@/lib/shipping/whatsapp";
+
+function bookNames(o: Order): string[] {
+  const names = parseBooks(o.book || "").map((b) => b.name).filter(Boolean);
+  return names;
+}
 
 function chunk<T>(items: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -140,12 +146,15 @@ function LabelCard({
       <div style={{ marginTop: "1.5mm", display: "flex", justifyContent: "space-between", gap: "2mm" }}>
         <div style={{ fontSize: "7.5pt", lineHeight: 1.4, minWidth: 0 }}>
           <div>Order ID: {order.orderId} · Qty: {order.qty}</div>
-          <div>Book: {order.book || "-"}</div>
-          <div style={{ fontWeight: 700 }}>
-            {order.payment === "COD" ? "COD amount" : "Amount"}: {amountText(order)}
-          </div>
+          {bookNames(order).map((n, i) => (
+            <div key={i}>{bookNames(order).length > 1 ? `Book ${i + 1}: ${n}` : `Book: ${n}`}</div>
+          ))}
+          {bookNames(order).length === 0 && <div>Book: -</div>}
+          <div>{amountText(order)}</div>
+          {order.payment === "COD" && (
+            <div style={{ fontWeight: 700 }}>{payableText(order)}</div>
+          )}
           <div style={{ fontSize: "8pt", fontWeight: 700, marginTop: "1mm" }}>Thank you for shopping with Zawiya Books!</div>
-          <div style={{ fontSize: "6pt" }}>Scan to visit us on Instagram</div>
         </div>
         {qr && <img src={qr} alt="Zawiya Books Instagram QR code" style={{ width: "18mm", height: "18mm", flexShrink: 0 }} />}
       </div>
