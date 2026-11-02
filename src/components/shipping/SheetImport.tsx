@@ -5,22 +5,12 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { Order } from "@/lib/shipping/types";
 import { DEFAULT_BOOK, DEFAULT_POST, commitOrderSeq, formatOrderId, peekOrderSeq } from "@/lib/shipping/storage";
-import { STAGES, stageMessage, waLink, type Stage } from "@/lib/shipping/whatsapp";
+import {
+  ACTIVE_KEY, DEFAULT_SHEETS, IMPORTED_KEY, SHEETS_KEY,
+  fetchSheetRows, type SavedSheet, type SheetRow,
+} from "@/lib/shipping/sheet";
 
-type SavedSheet = { name: string; id: string; gid?: string | undefined };
-const SHEETS_KEY = "zawiya.sheets";
-const ACTIVE_KEY = "zawiya.activeSheet";
-const IMPORTED_KEY = "zawiya.sheetImported";
-const DEFAULT_SHEETS: SavedSheet[] = [
-  { name: "Book orders", id: "1_biaElVDh_qm8z6ZfRKI4BLQUaa_g7Dh-w8Cd9ef-JA" },
-  { name: "Old orders", id: "1sJYQWIp-penJYTU9mGLRGe9bVIEHnRYhP0hmrPTS09I", gid: "2082984115" },
-];
-
-type Row = {
-  key: string; customer: string; address: string; pin: string; contact: string; whatsapp: string;
-  books: string; qty: number; payment: "Prepaid" | "COD" | null; cod: boolean;
-  payStatus: string; dispatchStatus: string; deliveryStatus: string;
-};
+type Row = SheetRow;
 
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
