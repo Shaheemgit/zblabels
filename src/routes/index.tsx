@@ -16,6 +16,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { Printer, FileDown } from "lucide-react";
 import { SheetImport } from "@/components/shipping/SheetImport";
+import { MessageManager } from "@/components/shipping/MessageManager";
 import { ManualOrderForm } from "@/components/shipping/ManualOrderForm";
 import { OrderList } from "@/components/shipping/OrderList";
 import { LabelPreview } from "@/components/shipping/LabelPreview";
