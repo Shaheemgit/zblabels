@@ -78,7 +78,7 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
     }
   }
 
-  const currentStage = (r: Row): Stage =>
+  const currentStage = (r: Row): "order" | "payment" | "dispatch" | "feedback" =>
     /deliver/i.test(r.deliveryStatus) ? "feedback" : /dispatch/i.test(r.dispatchStatus) ? "dispatch" : /rec(ei|ie)ved/i.test(r.payStatus) ? "payment" : "order";
 
   const shown = useMemo(() => (rows ?? []).filter((r) => {
@@ -147,7 +147,6 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
           <Input placeholder="Search name, PIN, phone, book" value={q} onChange={(e) => setQ(e.target.value)} />
           <div className="space-y-2">
             {shown.map((r) => {
-              const st = currentStage(r);
               const added = done.includes(r.key);
               return (
                 <div key={r.key} className="space-y-2 rounded-md border p-3 text-sm">
