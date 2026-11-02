@@ -147,9 +147,6 @@ function drawLabel(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.text("Thank you for shopping with Zawiya Books!", left, trackTop + 7, { maxWidth: innerW - 20 });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.text("Scan to visit us on Instagram", left, trackTop + 12);
   if (qr) doc.addImage(qr, "PNG", x + LABEL_W - pad - 18, trackTop + 2, 18, 18);
 }
 
