@@ -391,6 +391,10 @@ function App() {
             </div>
           )}
         </Section>
+
+        <Section title="WhatsApp Messages" step="5">
+          <MessageManager />
+        </Section>
       </main>
 
       {showPreview && selectedOrders.length > 0 && (
