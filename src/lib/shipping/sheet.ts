@@ -14,9 +14,17 @@ export const IMPORTED_KEY = "zawiya.sheetImported";
 
 export type SheetRow = {
   key: string; customer: string; address: string; pin: string; contact: string; whatsapp: string;
-  books: string; qty: number; payment: "Prepaid" | "COD" | null; cod: boolean;
+  books: string; qty: number; amount: number; payment: "Prepaid" | "COD" | null; cod: boolean;
   payStatus: string; dispatchStatus: string; deliveryStatus: string;
 };
+
+// Prices are written inside the books column, e.g. "COMBO 1 💰₹790/-" or "ഖലീഫ ഉമർ 💰₹240/-, അലി ഫാത്തിമ 💰₹190/-".
+export function parseSheetAmount(books: string): number {
+  const matches = books.matchAll(/₹\s*([\d,]+(?:\.\d+)?)/g);
+  let total = 0;
+  for (const m of matches) total += Number.parseFloat(m[1].replace(/,/g, "")) || 0;
+  return Math.round(total);
+}
 
 export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
