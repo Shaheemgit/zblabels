@@ -5,42 +5,12 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { Order } from "@/lib/shipping/types";
 import { DEFAULT_BOOK, DEFAULT_POST, commitOrderSeq, formatOrderId, peekOrderSeq } from "@/lib/shipping/storage";
-import { STAGES, stageMessage, waLink, type Stage } from "@/lib/shipping/whatsapp";
+import {
+  ACTIVE_KEY, DEFAULT_SHEETS, IMPORTED_KEY, SHEETS_KEY,
+  fetchSheetRows, type SavedSheet, type SheetRow,
+} from "@/lib/shipping/sheet";
 
-type SavedSheet = { name: string; id: string; gid?: string | undefined };
-const SHEETS_KEY = "zawiya.sheets";
-const ACTIVE_KEY = "zawiya.activeSheet";
-const IMPORTED_KEY = "zawiya.sheetImported";
-const DEFAULT_SHEETS: SavedSheet[] = [
-  { name: "Book orders", id: "1_biaElVDh_qm8z6ZfRKI4BLQUaa_g7Dh-w8Cd9ef-JA" },
-  { name: "Old orders", id: "1sJYQWIp-penJYTU9mGLRGe9bVIEHnRYhP0hmrPTS09I", gid: "2082984115" },
-];
-
-type Row = {
-  key: string; customer: string; address: string; pin: string; contact: string; whatsapp: string;
-  books: string; qty: number; payment: "Prepaid" | "COD" | null; cod: boolean;
-  payStatus: string; dispatchStatus: string; deliveryStatus: string;
-};
-
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [], cell = "", q = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (q) {
-      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
-      else if (c === '"') q = false;
-      else cell += c;
-    } else if (c === '"') q = true;
-    else if (c === ",") { row.push(cell); cell = ""; }
-    else if (c === "\n" || c === "\r") {
-      if (c === "\r" && text[i + 1] === "\n") i++;
-      row.push(cell); rows.push(row); row = []; cell = "";
-    } else cell += c;
-  }
-  if (cell || row.length) { row.push(cell); rows.push(row); }
-  return rows;
-}
+type Row = SheetRow;
 
 const read = <T,>(k: string, d: T): T => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 
@@ -98,35 +68,7 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
     if (!sheet) return;
     setLoading(true);
     try {
-      const url = `https://docs.google.com/spreadsheets/d/${sheet.id}/gviz/tq?tqx=out:csv${sheet.gid ? `&gid=${sheet.gid}` : ""}&t=${Date.now()}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error();
-      const text = await res.text();
-      if (text.trimStart().startsWith("<")) throw new Error();
-      const [head = [], ...body] = parseCsv(text);
-      const col = (...words: string[]) => { for (const w of words) { const i = head.findIndex((h) => h.toLowerCase().includes(w)); if (i >= 0) return i; } return -1; };
-      const ix = {
-        t: col("timestamp"), b: col("book"), n: col("name"), a: col("adress", "address"), p: col("pin"),
-        w: col("whatsapp number"), c: col("contact number", "contact"), q: col("quantity"),
-        pay: col("payment option"), st: col("payment status"), ds: col("dispatch status"), dv: col("delivety status", "delivery status"),
-      };
-      const g = (r: string[], i: number) => (i >= 0 ? (r[i] ?? "").trim() : "");
-      const parsed: Row[] = body.filter((r) => r.some((c) => c.trim())).map((r) => {
-        const s = g(r, ix.st).toLowerCase(), p = g(r, ix.pay).toLowerCase();
-        const cod = /cash on delivery|\bcod\b/.test(p) || /\bcod\b|cash/.test(s);
-        let payment: Row["payment"] = null;
-        if (!/pending/.test(s)) {
-          if (cod) payment = "COD";
-          else if (/rec(ei|ie)ved/.test(s) || /upi|gpay|paytm|phonepay/.test(p)) payment = "Prepaid";
-        }
-        return {
-          key: `${g(r, ix.t)}|${g(r, ix.w) || g(r, ix.c)}`,
-          customer: g(r, ix.n), address: g(r, ix.a), pin: g(r, ix.p),
-          contact: g(r, ix.c), whatsapp: g(r, ix.w) || g(r, ix.c), books: g(r, ix.b),
-          qty: Number.parseInt(g(r, ix.q) || "1", 10) || 1, payment, cod,
-          payStatus: g(r, ix.st), dispatchStatus: g(r, ix.ds), deliveryStatus: g(r, ix.dv),
-        };
-      }).reverse();
+      const parsed = await fetchSheetRows(sheet);
       setRows(parsed); setPicked([]);
       if (parsed.length === 0) toast.success("No orders in this sheet yet");
     } catch {
@@ -136,7 +78,7 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
     }
   }
 
-  const currentStage = (r: Row): Stage =>
+  const currentStage = (r: Row): "order" | "payment" | "dispatch" | "feedback" =>
     /deliver/i.test(r.deliveryStatus) ? "feedback" : /dispatch/i.test(r.dispatchStatus) ? "dispatch" : /rec(ei|ie)ved/i.test(r.payStatus) ? "payment" : "order";
 
   const shown = useMemo(() => (rows ?? []).filter((r) => {
@@ -205,7 +147,6 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
           <Input placeholder="Search name, PIN, phone, book" value={q} onChange={(e) => setQ(e.target.value)} />
           <div className="space-y-2">
             {shown.map((r) => {
-              const st = currentStage(r);
               const added = done.includes(r.key);
               return (
                 <div key={r.key} className="space-y-2 rounded-md border p-3 text-sm">
@@ -223,15 +164,6 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
                       <div className="text-muted-foreground">PIN {r.pin || "missing"} · Contact {r.contact || "—"}</div>
                     </div>
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {STAGES.map((s) => (
-                      <Button key={s.id} asChild size="sm" variant={s.id === st ? "default" : "outline"} disabled={!r.whatsapp}>
-                        <a href={r.whatsapp ? waLink(r.whatsapp, stageMessage(s.id, { name: r.customer, books: r.books, cod: r.cod })) : undefined} target="_blank" rel="noreferrer">
-                          {s.label}
-                        </a>
-                      </Button>
-                    ))}
-                  </div>
                 </div>
               );
             })}
