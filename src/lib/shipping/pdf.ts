@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
-import { amountText, senderLines, type Order, type Sender } from "./types";
+import { amountText, orderTotals, payableText, senderLines, type Order, type Sender } from "./types";
+import { parseBooks } from "./whatsapp";
 
 export const LABELS_PER_PAGE = 4;
 export const INSTAGRAM_URL = "https://www.instagram.com/zawiya_books/";
@@ -118,14 +119,25 @@ function drawLabel(
   doc.setFontSize(7.5);
   doc.text(`Order ID: ${order.orderId}`, left, cursor);
   cursor += 3.4;
-  for (const w of doc.splitTextToSize(`Book: ${order.book || "-"}`, innerW) as string[]) {
-    doc.text(w, left, cursor);
-    cursor += 3.4;
+  const bookNames = parseBooks(order.book || "").map((b) => b.name).filter(Boolean);
+  const bookLines = bookNames.length > 1
+    ? bookNames.map((n, i) => `Book ${i + 1}: ${n}`)
+    : [`Book: ${bookNames[0] || order.book || "-"}`];
+  for (const line of bookLines) {
+    for (const w of doc.splitTextToSize(line, innerW) as string[]) {
+      doc.text(w, left, cursor);
+      cursor += 3.4;
+    }
   }
   doc.text(`Quantity: ${order.qty}`, left, cursor);
   cursor += 3.4;
   doc.setFont("helvetica", "bold");
-  doc.text(`${order.payment === "COD" ? "COD amount" : "Amount"}: ${amountText(order, "Rs. ")}`, left, cursor, { maxWidth: innerW - 2 });
+  doc.text(`Amount: ${amountText(order, "Rs. ")}`, left, cursor, { maxWidth: innerW - 2 });
+  cursor += 3.4;
+  if (orderTotals(order).payable > orderTotals(order).total) {
+    doc.text(payableText(order, "Rs. "), left, cursor, { maxWidth: innerW - 2 });
+    cursor += 3.4;
+  }
   doc.setFont("helvetica", "normal");
 
   // Thank-you note and Instagram QR anchored to the bottom
@@ -135,9 +147,6 @@ function drawLabel(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.text("Thank you for shopping with Zawiya Books!", left, trackTop + 7, { maxWidth: innerW - 20 });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.text("Scan to visit us on Instagram", left, trackTop + 12);
   if (qr) doc.addImage(qr, "PNG", x + LABEL_W - pad - 18, trackTop + 2, 18, 18);
 }
 
