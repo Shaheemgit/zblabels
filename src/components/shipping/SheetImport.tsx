@@ -165,15 +165,6 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
                       <div className="text-muted-foreground">PIN {r.pin || "missing"} · Contact {r.contact || "—"}</div>
                     </div>
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {STAGES.map((s) => (
-                      <Button key={s.id} asChild size="sm" variant={s.id === st ? "default" : "outline"} disabled={!r.whatsapp}>
-                        <a href={r.whatsapp ? waLink(r.whatsapp, stageMessage(s.id, { name: r.customer, books: r.books, cod: r.cod })) : undefined} target="_blank" rel="noreferrer">
-                          {s.label}
-                        </a>
-                      </Button>
-                    ))}
-                  </div>
                 </div>
               );
             })}
