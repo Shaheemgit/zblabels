@@ -51,13 +51,12 @@ export function senderLines(s: Sender): string[] {
   return parts.map((p) => p.trim()).filter(Boolean);
 }
 
-export const PRICE_TOTAL = { Prepaid: 290, COD: 295 } as const;
-
 export const COD_HANDLING_PCT = 0.02;
 
 export function orderTotals(o: Pick<Order, "amount" | "payment">) {
-  const total = PRICE_TOTAL[o.payment] ?? o.amount;
-  // 2% COD handling charge, rounded like the WhatsApp messages (₹295 → ₹6 → ₹301 payable).
+  // Amount comes from the Google Sheet order (or manual entry) — no fixed preset price.
+  const total = o.amount;
+  // 2% COD handling charge, rounded like the WhatsApp messages (e.g. ₹295 → ₹6 → ₹301 payable).
   const codCharge = o.payment === "COD" ? Math.round(total * COD_HANDLING_PCT) : 0;
   return { book: total, delivery: 0, total, codCharge, payable: total + codCharge };
 }

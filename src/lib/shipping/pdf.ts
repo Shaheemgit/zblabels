@@ -4,7 +4,7 @@ import { amountText, orderTotals, payableText, senderLines, type Order, type Sen
 import { parseBooks } from "./whatsapp";
 
 export const LABELS_PER_PAGE = 4;
-export const INSTAGRAM_URL = "https://www.instagram.com/zawiya_books/";
+export const INSTAGRAM_URL = "https://www.instagram.com/zawiyabooks.online/";
 
 export async function qrDataUrl(text: string): Promise<string> {
   return QRCode.toDataURL(text, { errorCorrectionLevel: "M", margin: 1, width: 512 });
