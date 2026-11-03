@@ -8,6 +8,7 @@ import {
   ORDER_SHEET, fetchSheetRows, stageOf, statusWriteValue,
   type SheetRow, type WriteStage,
 } from "@/lib/shipping/sheet";
+import { loadLabeledKeys, saveLabeledKeys } from "@/lib/shipping/storage";
 import { updateSheetStatus } from "@/lib/shipping/sheet.functions";
 import { amountText, payableText, type Order } from "@/lib/shipping/types";
 import { DEFAULT_BOOK, DEFAULT_POST, commitOrderSeq, formatOrderId, peekOrderSeq } from "@/lib/shipping/storage";
@@ -25,11 +26,11 @@ const WRITE_RANK: Record<WriteStage, number> = { payment: 1, dispatch: 2, delive
 export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id">) => void; signedIn: boolean }) {
   const updateStatusFn = useServerFn(updateSheetStatus);
   const [rows, setRows] = useState<SheetRow[] | null>(null);
+  const [labeled, setLabeled] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
-  const [added, setAdded] = useState<string[]>([]);
 
   async function loadRows() {
     setLoading(true);
@@ -45,6 +46,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
   }
 
   useEffect(() => {
+    setLabeled(loadLabeledKeys());
     loadRows();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -83,8 +85,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
     }
   }
 
-  function makeLabel(r: SheetRow) {
-    if (added.includes(r.key)) return;
+  function addLabel(r: SheetRow) {
     const seq = peekOrderSeq();
     onAdd({
       orderId: formatOrderId(seq), customer: r.customer, address: r.address, pin: r.pin,
@@ -95,8 +96,30 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
       amount: r.amount > 0 ? r.amount : 260 * r.qty,
     });
     commitOrderSeq(seq);
-    setAdded((p) => [...p, r.key]);
+  }
+
+  function markLabeled(keys: string[]) {
+    setLabeled((prev) => {
+      const next = Array.from(new Set([...prev, ...keys]));
+      saveLabeledKeys(next);
+      return next;
+    });
+  }
+
+  function makeLabel(r: SheetRow) {
+    if (labeled.includes(r.key)) { toast.info("Label already created for this order"); return; }
+    addLabel(r);
+    markLabeled([r.key]);
     toast.success("Order added to the label queue");
+  }
+
+  // Bulk: queue every order currently shown by the filter/search, skipping ones already labeled.
+  function makeAllLabels() {
+    const pending = shown.filter((r) => !labeled.includes(r.key));
+    if (pending.length === 0) { toast.info("Every shown order already has a label"); return; }
+    for (const r of pending) addLabel(r);
+    markLabeled(pending.map((r) => r.key));
+    toast.success(`${pending.length} order${pending.length === 1 ? "" : "s"} added to the label queue`);
   }
 
   const writeStages: [WriteStage, string][] = [
@@ -109,6 +132,11 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
         <Button variant="outline" className="h-12 flex-1" onClick={loadRows} disabled={loading}>
           {loading ? "Loading…" : rows ? "Refresh orders" : "Load orders"}
         </Button>
+        {rows !== null && shown.length > 0 && (
+          <Button className="h-12 flex-1" onClick={makeAllLabels}>
+            Make labels for all ({shown.filter((r) => !labeled.includes(r.key)).length})
+          </Button>
+        )}
       </div>
 
       {rows && (
@@ -125,9 +153,16 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
           <div className="space-y-2">
             {shown.map((r) => {
               const st = stageOf(r);
-              const isAdded = added.includes(r.key);
+              const isLabeled = labeled.includes(r.key);
               return (
-                <div key={r.key} className="space-y-2 rounded-md border p-3 text-sm">
+                <div
+                  key={r.key}
+                  className={
+                    isLabeled
+                      ? "space-y-2 rounded-md border border-primary bg-primary/10 p-3 text-sm"
+                      : "space-y-2 rounded-md border p-3 text-sm"
+                  }
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="font-medium">{r.customer || "No name"} · {r.cod ? "COD" : "Prepaid"}</div>
@@ -136,7 +171,12 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                         {r.cod && ` · ${payableText({ amount: r.amount, payment: "COD" })}`}
                       </div>
                     </div>
-                    <span className="shrink-0 rounded border px-2 py-0.5 text-xs">{STAGE_LABEL[st]}</span>
+                    <div className="flex shrink-0 items-start gap-1">
+                      {isLabeled && (
+                        <span className="rounded bg-primary px-2 py-0.5 text-xs text-primary-foreground">✓ Label created</span>
+                      )}
+                      <span className="rounded border px-2 py-0.5 text-xs">{STAGE_LABEL[st]}</span>
+                    </div>
                   </div>
                   {r.books && <div className="text-muted-foreground">{r.books}</div>}
                   <div className="truncate text-muted-foreground">{r.address}</div>
@@ -146,8 +186,8 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                   {r.tracking && <div className="text-muted-foreground">Tracking: {r.tracking}</div>}
 
                   <div className="flex flex-wrap gap-1">
-                    <Button size="sm" variant={isAdded ? "outline" : "default"} onClick={() => makeLabel(r)}>
-                      {isAdded ? "✓ In label queue" : "Make label"}
+                    <Button size="sm" variant={isLabeled ? "outline" : "default"} onClick={() => makeLabel(r)}>
+                      {isLabeled ? "✓ Label created" : "Make label"}
                     </Button>
                     {writeStages.map(([ws, label]) => {
                       const reached = STAGE_RANK[st] >= WRITE_RANK[ws];
