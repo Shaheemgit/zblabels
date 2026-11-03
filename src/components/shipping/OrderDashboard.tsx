@@ -153,9 +153,16 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
           <div className="space-y-2">
             {shown.map((r) => {
               const st = stageOf(r);
-              const isAdded = added.includes(r.key);
+              const isLabeled = labeled.includes(r.key);
               return (
-                <div key={r.key} className="space-y-2 rounded-md border p-3 text-sm">
+                <div
+                  key={r.key}
+                  className={
+                    isLabeled
+                      ? "space-y-2 rounded-md border border-primary bg-primary/10 p-3 text-sm"
+                      : "space-y-2 rounded-md border p-3 text-sm"
+                  }
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="font-medium">{r.customer || "No name"} · {r.cod ? "COD" : "Prepaid"}</div>
@@ -164,7 +171,12 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                         {r.cod && ` · ${payableText({ amount: r.amount, payment: "COD" })}`}
                       </div>
                     </div>
-                    <span className="shrink-0 rounded border px-2 py-0.5 text-xs">{STAGE_LABEL[st]}</span>
+                    <div className="flex shrink-0 items-start gap-1">
+                      {isLabeled && (
+                        <span className="rounded bg-primary px-2 py-0.5 text-xs text-primary-foreground">✓ Label created</span>
+                      )}
+                      <span className="rounded border px-2 py-0.5 text-xs">{STAGE_LABEL[st]}</span>
+                    </div>
                   </div>
                   {r.books && <div className="text-muted-foreground">{r.books}</div>}
                   <div className="truncate text-muted-foreground">{r.address}</div>
@@ -174,8 +186,8 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                   {r.tracking && <div className="text-muted-foreground">Tracking: {r.tracking}</div>}
 
                   <div className="flex flex-wrap gap-1">
-                    <Button size="sm" variant={isAdded ? "outline" : "default"} onClick={() => makeLabel(r)}>
-                      {isAdded ? "✓ In label queue" : "Make label"}
+                    <Button size="sm" variant={isLabeled ? "outline" : "default"} onClick={() => makeLabel(r)}>
+                      {isLabeled ? "✓ Label created" : "Make label"}
                     </Button>
                     {writeStages.map(([ws, label]) => {
                       const reached = STAGE_RANK[st] >= WRITE_RANK[ws];
