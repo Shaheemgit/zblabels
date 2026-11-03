@@ -8,6 +8,7 @@ import {
   ORDER_SHEET, fetchSheetRows, stageOf, statusWriteValue,
   type SheetRow, type WriteStage,
 } from "@/lib/shipping/sheet";
+import { loadLabeledKeys, saveLabeledKeys } from "@/lib/shipping/storage";
 import { updateSheetStatus } from "@/lib/shipping/sheet.functions";
 import { amountText, payableText, type Order } from "@/lib/shipping/types";
 import { DEFAULT_BOOK, DEFAULT_POST, commitOrderSeq, formatOrderId, peekOrderSeq } from "@/lib/shipping/storage";
@@ -25,11 +26,11 @@ const WRITE_RANK: Record<WriteStage, number> = { payment: 1, dispatch: 2, delive
 export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id">) => void; signedIn: boolean }) {
   const updateStatusFn = useServerFn(updateSheetStatus);
   const [rows, setRows] = useState<SheetRow[] | null>(null);
+  const [labeled, setLabeled] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
-  const [added, setAdded] = useState<string[]>([]);
 
   async function loadRows() {
     setLoading(true);
@@ -45,6 +46,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
   }
 
   useEffect(() => {
+    setLabeled(loadLabeledKeys());
     loadRows();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
