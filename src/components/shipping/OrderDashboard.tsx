@@ -85,8 +85,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
     }
   }
 
-  function makeLabel(r: SheetRow) {
-    if (added.includes(r.key)) return;
+  function addLabel(r: SheetRow) {
     const seq = peekOrderSeq();
     onAdd({
       orderId: formatOrderId(seq), customer: r.customer, address: r.address, pin: r.pin,
@@ -97,8 +96,30 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
       amount: r.amount > 0 ? r.amount : 260 * r.qty,
     });
     commitOrderSeq(seq);
-    setAdded((p) => [...p, r.key]);
+  }
+
+  function markLabeled(keys: string[]) {
+    setLabeled((prev) => {
+      const next = Array.from(new Set([...prev, ...keys]));
+      saveLabeledKeys(next);
+      return next;
+    });
+  }
+
+  function makeLabel(r: SheetRow) {
+    if (labeled.includes(r.key)) { toast.info("Label already created for this order"); return; }
+    addLabel(r);
+    markLabeled([r.key]);
     toast.success("Order added to the label queue");
+  }
+
+  // Bulk: queue every order currently shown by the filter/search, skipping ones already labeled.
+  function makeAllLabels() {
+    const pending = shown.filter((r) => !labeled.includes(r.key));
+    if (pending.length === 0) { toast.info("Every shown order already has a label"); return; }
+    for (const r of pending) addLabel(r);
+    markLabeled(pending.map((r) => r.key));
+    toast.success(`${pending.length} order${pending.length === 1 ? "" : "s"} added to the label queue`);
   }
 
   const writeStages: [WriteStage, string][] = [
