@@ -3,13 +3,13 @@ import type { Stage } from "./whatsapp";
 
 export type SavedSheet = { name: string; id: string; gid?: string | undefined };
 
-export const DEFAULT_SHEETS: SavedSheet[] = [
-  { name: "Book orders", id: "1_biaElVDh_qm8z6ZfRKI4BLQUaa_g7Dh-w8Cd9ef-JA" },
-  { name: "Old orders", id: "1sJYQWIp-penJYTU9mGLRGe9bVIEHnRYhP0hmrPTS09I", gid: "2082984115" },
-];
+// The one order source maintained by the owner — all other sheets are disconnected.
+export const ORDER_SHEET: SavedSheet = {
+  name: "Book orders",
+  id: "1_biaElVDh_qm8z6ZfRKI4BLQUaa_g7Dh-w8Cd9ef-JA",
+  gid: "1229129423",
+};
 
-export const SHEETS_KEY = "zawiya.sheets";
-export const ACTIVE_KEY = "zawiya.activeSheet";
 export const IMPORTED_KEY = "zawiya.sheetImported";
 
 export type SheetRow = {
