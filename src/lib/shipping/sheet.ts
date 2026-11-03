@@ -16,7 +16,14 @@ export type SheetRow = {
   key: string; customer: string; address: string; pin: string; contact: string; whatsapp: string;
   books: string; qty: number; amount: number; payment: "Prepaid" | "COD" | null; cod: boolean;
   payStatus: string; dispatchStatus: string; deliveryStatus: string;
+  tracking: string; sheetRow: number;
 };
+
+// Value written into the sheet's status column for each managed stage.
+export type WriteStage = "payment" | "dispatch" | "delivery";
+export function statusWriteValue(stage: WriteStage): string {
+  return stage === "payment" ? "Payment Received" : stage === "dispatch" ? "Dispatched" : "Delivered";
+}
 
 // Prices are written inside the books column, e.g. "COMBO 1 💰₹790/-" or "ഖലീഫ ഉമർ 💰₹240/-, അലി ഫാത്തിമ 💰₹190/-".
 export function parseSheetAmount(books: string): number {
