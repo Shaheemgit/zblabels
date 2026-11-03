@@ -15,8 +15,7 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { Printer, FileDown } from "lucide-react";
-import { SheetImport } from "@/components/shipping/SheetImport";
-import { MessageManager } from "@/components/shipping/MessageManager";
+import { OrderDashboard } from "@/components/shipping/OrderDashboard";
 import { ManualOrderForm } from "@/components/shipping/ManualOrderForm";
 import { OrderList } from "@/components/shipping/OrderList";
 import { LabelPreview } from "@/components/shipping/LabelPreview";
@@ -249,14 +248,17 @@ function App() {
           ))}
         </section>
 
-        <Section title="Add Order" step="1">
-          <SheetImport onAdd={addOrder} onDone={() => setFormKey((k) => k + 1)} />
+        <Section title="Order Management" step="1">
+          <OrderDashboard onAdd={addOrder} signedIn={Boolean(userId)} />
+        </Section>
+
+        <Section title="Add Order" step="2">
           <ManualOrderForm key={formKey} onAdd={addOrder} />
         </Section>
 
         <Section
-          title="Orders"
-          step="2"
+          title="Label Queue"
+          step="3"
           action={
             orders.length > 0 && (
               <AlertDialog>
@@ -312,7 +314,7 @@ function App() {
           />
         </Section>
 
-        <Section title="Labels" step="3">
+        <Section title="Labels" step="4">
           <div className="flex flex-wrap gap-2">
             <Button
               className="h-12 flex-1"
@@ -346,7 +348,7 @@ function App() {
           )}
         </Section>
 
-        <Section title="Previous Labels" step="4">
+        <Section title="Previous Labels" step="5">
           {history.length === 0 ? (
             <p className="text-sm text-muted-foreground">Labels you download or print will appear here.</p>
           ) : (
@@ -392,9 +394,6 @@ function App() {
           )}
         </Section>
 
-        <Section title="WhatsApp Messages" step="5">
-          <MessageManager />
-        </Section>
       </main>
 
       {showPreview && selectedOrders.length > 0 && (

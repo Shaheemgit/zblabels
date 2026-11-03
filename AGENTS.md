@@ -11,4 +11,4 @@
 
 Shipping labels are generated entirely in the browser, with sender details and the generated count stored locally; this keeps the internal tool usable without accounts or a backend.
 
-- Signed-in users sync orders and label history to the backend (owner-only rows); browser storage remains the cache and works signed-out. Why: cross-device access via Google login.
+The single maintained order sheet (`ORDER_SHEET` in `src/lib/shipping/sheet.ts`) is the source of orders; the Order Management dashboard reads it and signed-in users write stage statuses back to its status columns through `src/lib/shipping/sheet.functions.ts` (Google Sheets connector gateway, server-side only). Why: one connected sheet per the owner; stage updates must land in the sheet itself, and connector secrets must never reach the browser.

@@ -16,7 +16,14 @@ export type SheetRow = {
   key: string; customer: string; address: string; pin: string; contact: string; whatsapp: string;
   books: string; qty: number; amount: number; payment: "Prepaid" | "COD" | null; cod: boolean;
   payStatus: string; dispatchStatus: string; deliveryStatus: string;
+  tracking: string; sheetRow: number;
 };
+
+// Value written into the sheet's status column for each managed stage.
+export type WriteStage = "payment" | "dispatch" | "delivery";
+export function statusWriteValue(stage: WriteStage): string {
+  return stage === "payment" ? "Payment Received" : stage === "dispatch" ? "Dispatched" : "Delivered";
+}
 
 // Prices are written inside the books column, e.g. "COMBO 1 💰₹790/-" or "ഖലീഫ ഉമർ 💰₹240/-, അലി ഫാത്തിമ 💰₹190/-".
 export function parseSheetAmount(books: string): number {
@@ -71,11 +78,13 @@ export async function fetchSheetRows(sheet: SavedSheet): Promise<SheetRow[]> {
     t: col("timestamp"), b: col("book"), n: col("name"), a: col("adress", "address"), p: col("pin"),
     w: col("whatsapp number"), c: col("contact number", "contact"), q: col("quantity"),
     pay: col("payment option"), st: col("payment status"), ds: col("dispatch status"), dv: col("delivety status", "delivery status"),
+    tr: col("tracking number", "tracking"),
   };
   const g = (r: string[], i: number) => (i >= 0 ? (r[i] ?? "").trim() : "");
   return body
-    .filter((r) => r.some((c) => c.trim()))
-    .map((r) => {
+    .map((r, i) => ({ r, row: i + 2 })) // sheet row 1 is the header
+    .filter(({ r }) => r.some((c) => c.trim()))
+    .map(({ r, row }) => {
       const s = g(r, ix.st).toLowerCase(), p = g(r, ix.pay).toLowerCase();
       const cod = /cash on delivery|\bcod\b/.test(p) || /\bcod\b|cash/.test(s);
       let payment: SheetRow["payment"] = null;
@@ -90,6 +99,8 @@ export async function fetchSheetRows(sheet: SavedSheet): Promise<SheetRow[]> {
         qty: Number.parseInt(g(r, ix.q) || "1", 10) || 1, payment, cod,
         payStatus: g(r, ix.st), dispatchStatus: g(r, ix.ds), deliveryStatus: g(r, ix.dv),
         amount: parseSheetAmount(g(r, ix.b)),
+        tracking: g(r, ix.tr),
+        sheetRow: row,
       };
     })
     .reverse();
