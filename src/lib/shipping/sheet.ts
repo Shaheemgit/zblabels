@@ -57,6 +57,9 @@ export function stageOf(r: SheetRow): Stage {
   if (/deliver/i.test(r.deliveryStatus)) return "feedback";
   if (/dispatch/i.test(r.dispatchStatus)) return "dispatch";
   if (/rec(ei|ie)ved/i.test(r.payStatus)) return "payment";
+  // COD orders are paid on delivery: the sheet already marks their payment status "COD",
+  // so they count as the payment stage without a manual "Mark Paid".
+  if (r.cod) return "payment";
   return "order";
 }
 
