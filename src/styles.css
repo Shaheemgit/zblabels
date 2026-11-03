@@ -138,6 +138,10 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --cod: oklch(0.45 0.08 70);
+  --cod-foreground: oklch(0.95 0.07 85);
+  --prepaid: oklch(0.4 0.08 260);
+  --prepaid-foreground: oklch(0.93 0.05 250);
 }
 
 @layer base {
