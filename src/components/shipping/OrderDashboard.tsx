@@ -175,7 +175,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                       {isLabeled && (
                         <span className="rounded bg-primary px-2 py-0.5 text-xs text-primary-foreground">✓ Label created</span>
                       )}
-                      <span className="rounded border px-2 py-0.5 text-xs">{STAGE_LABEL[st]}</span>
+                      <span className="rounded border px-2 py-0.5 text-xs">{st === "payment" && r.cod ? "COD" : STAGE_LABEL[st]}</span>
                     </div>
                   </div>
                   {r.books && <div className="text-muted-foreground">{r.books}</div>}
@@ -189,7 +189,8 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                     <Button size="sm" variant={isLabeled ? "outline" : "default"} onClick={() => makeLabel(r)}>
                       {isLabeled ? "✓ Label created" : "Make label"}
                     </Button>
-                    {writeStages.map(([ws, label]) => {
+                    {/* COD orders are automatically in the payment stage — no "Mark Paid" for them. */}
+                    {writeStages.filter(([ws]) => !(ws === "payment" && r.cod)).map(([ws, label]) => {
                       const reached = STAGE_RANK[st] >= WRITE_RANK[ws];
                       return (
                         <Button
