@@ -22,7 +22,7 @@ export type SheetRow = {
 export function parseSheetAmount(books: string): number {
   const matches = books.matchAll(/₹\s*([\d,]+(?:\.\d+)?)/g);
   let total = 0;
-  for (const m of matches) total += Number.parseFloat(m[1].replace(/,/g, "")) || 0;
+  for (const m of matches) total += Number.parseFloat((m[1] ?? "0").replace(/,/g, "")) || 0;
   return Math.round(total);
 }
 
@@ -89,6 +89,7 @@ export async function fetchSheetRows(sheet: SavedSheet): Promise<SheetRow[]> {
         contact: g(r, ix.c), whatsapp: g(r, ix.w) || g(r, ix.c), books: g(r, ix.b),
         qty: Number.parseInt(g(r, ix.q) || "1", 10) || 1, payment, cod,
         payStatus: g(r, ix.st), dispatchStatus: g(r, ix.ds), deliveryStatus: g(r, ix.dv),
+        amount: parseSheetAmount(g(r, ix.b)),
       };
     })
     .reverse();

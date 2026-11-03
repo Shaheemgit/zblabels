@@ -100,7 +100,9 @@ export function SheetImport({ onAdd, onDone }: { onAdd: (o: Omit<Order, "id">) =
         orderId: formatOrderId(seq), customer: r.customer, address: r.address, pin: r.pin,
         // Label phone uses only the "Contact number" column — never "Whatsapp number".
         mobile: r.contact, book: r.books || DEFAULT_BOOK, post: DEFAULT_POST,
-        payment: r.payment ?? (r.cod ? "COD" : "Prepaid"), qty: r.qty, amount: 260 * r.qty,
+        payment: r.payment ?? (r.cod ? "COD" : "Prepaid"), qty: r.qty,
+        // Amount comes from the prices written in the books column; fall back to ₹260 per book when none is listed.
+        amount: r.amount > 0 ? r.amount : 260 * r.qty,
       });
       commitOrderSeq(seq); seq++;
     }
