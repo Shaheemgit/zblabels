@@ -45,7 +45,7 @@ export function stageMessage(stage: Stage, { name, books, cod }: MsgInput): stri
   const items = list.map((b) => `▪ ${b.name} — ₹${fmt(b.price)}`).join("\n");
   const head = `👋 Hi ${name},\n\n🎉 *YOUR ORDER HAS BEEN RECEIVED!*\nThank you for shopping with Zawiya Books.\n\n${LINE}\n📦 *ORDER SUMMARY*\n${LINE}\n\n📚 *Books ordered (${list.length}):*\n${items}\n\n${LINE}\n💰 *PAYMENT DETAILS*\n${LINE}\nBook subtotal: ₹${fmt(subtotal)}\n`;
   if (cod)
-    return `${head}COD handling charge (2%): ₹${fmt(codCharge)}\n──────────────────\n💵 *TOTAL PAYABLE: ₹${fmt(subtotal + codCharge)}*\n\n💳 Payment method: Cash on Delivery\n\n📦 Your order will be dispatched soon.\n\n✅ *Please reply OK to confirm your order.*\n\n🙏 Thank you for choosing Zawiya Books!`;
+    return `${head}COD handling charge (2%): ₹${fmt(codCharge)}\n──────────────────\n💵 *TOTAL PAYABLE: ₹${fmt(subtotal + codCharge)}*\n\n💳 Payment method: Cash on Delivery\n\n📦 Your order will be dispatched soon.\n\n🙏 Thank you for choosing Zawiya Books!`;
   return `${head}🚚 All prices are inclusive of delivery charges.\n──────────────────\n💵 *TOTAL TO PAY: ₹${fmt(subtotal)}*\n\n💳 Payment method: PREPAID\n\n🔗 *UPI ID:* 8921291146@ptsbi\n\n✅ Please complete the payment to confirm your order.\n\n📸 Please share the payment screenshot on WhatsApp after completing the payment so we can confirm your order.\n\n📦 Your order will be dispatched after payment confirmation.\n\n🙏 Thank you for choosing Zawiya Books!`;
 }
 
