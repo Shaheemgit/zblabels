@@ -132,6 +132,11 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
         <Button variant="outline" className="h-12 flex-1" onClick={loadRows} disabled={loading}>
           {loading ? "Loading…" : rows ? "Refresh orders" : "Load orders"}
         </Button>
+        {rows !== null && shown.length > 0 && (
+          <Button className="h-12 flex-1" onClick={makeAllLabels}>
+            Make labels for all ({shown.filter((r) => !labeled.includes(r.key)).length})
+          </Button>
+        )}
       </div>
 
       {rows && (
