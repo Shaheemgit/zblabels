@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseSheetAmount } from "./sheet";
+import { parseSheetAmount, statusWriteValue } from "./sheet";
 
 describe("parseSheetAmount", () => {
   it("sums a single price written in the books column", () => {
@@ -12,5 +12,19 @@ describe("parseSheetAmount", () => {
 
   it("returns 0 when no price is listed", () => {
     expect(parseSheetAmount("Hirayil ninnu hridayathilek")).toBe(0);
+  });
+});
+
+describe("statusWriteValue", () => {
+  it("writes Payment Received for the payment stage", () => {
+    expect(statusWriteValue("payment")).toBe("Payment Received");
+  });
+
+  it("writes Dispatched for the dispatch stage", () => {
+    expect(statusWriteValue("dispatch")).toBe("Dispatched");
+  });
+
+  it("writes Delivered for the delivery stage", () => {
+    expect(statusWriteValue("delivery")).toBe("Delivered");
   });
 });
