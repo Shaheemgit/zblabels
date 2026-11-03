@@ -3,47 +3,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { STAGES, stageMessage, waLink } from "@/lib/shipping/whatsapp";
-import {
-  ACTIVE_KEY, DEFAULT_SHEETS, IMPORTED_KEY, SHEETS_KEY,
-  fetchSheetRows, stageOf, type SavedSheet, type SheetRow,
-} from "@/lib/shipping/sheet";
+import { ORDER_SHEET, fetchSheetRows, stageOf, type SheetRow } from "@/lib/shipping/sheet";
 
 type Filter = "all" | "order" | "payment" | "dispatch" | "feedback";
-
-const read = <T,>(k: string, d: T): T => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 
 const FILTERS: [Filter, string][] = [
   ["all", "All"], ["order", "New"], ["payment", "Paid"], ["dispatch", "Dispatched"], ["feedback", "Delivered"],
 ];
 
-// Dedicated section for customer messaging. Shares the saved-sheet list with the importer
-// but keeps its own loading, filtering and stage buttons.
+// Dedicated section for customer messaging. Reads the single maintained order sheet
+// and keeps its own loading, filtering and stage buttons.
 export function MessageManager() {
-  const [sheets, setSheets] = useState<SavedSheet[]>(DEFAULT_SHEETS);
-  const [active, setActive] = useState(0);
   const [rows, setRows] = useState<SheetRow[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
 
-  useEffect(() => {
-    setSheets(read(SHEETS_KEY, DEFAULT_SHEETS));
-    setActive(read(ACTIVE_KEY, 0));
-  }, []);
-
-  const sheet = sheets[active] ?? sheets[0];
-
-  function pickSheet(i: number) {
-    setActive(i);
-    setRows(null);
-    localStorage.setItem(ACTIVE_KEY, JSON.stringify(i));
-  }
-
   async function loadRows() {
-    if (!sheet) return;
     setLoading(true);
     try {
-      const parsed = await fetchSheetRows(sheet);
+      const parsed = await fetchSheetRows(ORDER_SHEET);
       setRows(parsed);
       if (parsed.length === 0) toast.success("No orders in this sheet yet");
     } catch {
@@ -64,19 +43,9 @@ export function MessageManager() {
       <p className="text-sm text-muted-foreground">
         Send order updates on WhatsApp. Buttons open a ready-made message for the customer — nothing is sent automatically.
       </p>
-      <div className="flex gap-2">
-        <select
-          className="h-12 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm"
-          value={active}
-          onChange={(e) => pickSheet(Number(e.target.value))}
-          aria-label="Google Sheet for messages"
-        >
-          {sheets.map((s, i) => <option key={`${s.id}-${i}`} value={i}>{s.name}</option>)}
-        </select>
-        <Button variant="outline" className="h-12" onClick={loadRows} disabled={loading}>
-          {loading ? "Loading…" : rows ? "Refresh" : "Load"}
-        </Button>
-      </div>
+      <Button variant="outline" className="h-12 w-full" onClick={loadRows} disabled={loading}>
+        {loading ? "Loading…" : rows ? "Refresh" : "Load"}
+      </Button>
 
       {rows && rows.length > 0 && (
         <>
