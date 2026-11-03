@@ -163,20 +163,20 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                       : "space-y-2 rounded-md border p-3 text-sm"
                   }
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className={`-m-3 mb-2 flex items-start justify-between gap-2 rounded-t-md px-3 py-2 ${r.cod ? "bg-cod text-cod-foreground" : "bg-prepaid text-prepaid-foreground"}`}>
                     <div className="min-w-0">
                       <div className="font-medium">{r.customer || "No name"} · {r.cod ? "COD" : "Prepaid"}</div>
-                      <div className="text-muted-foreground">
-                        {amountText({ amount: r.amount, payment: r.payment ?? "Prepaid" })}
-                        {r.cod && ` · ${payableText({ amount: r.amount, payment: "COD" })}`}
-                      </div>
                     </div>
                     <div className="flex shrink-0 items-start gap-1">
                       {isLabeled && (
                         <span className="rounded bg-primary px-2 py-0.5 text-xs text-primary-foreground">✓ Label created</span>
                       )}
-                      <span className="rounded border px-2 py-0.5 text-xs">{st === "payment" && r.cod ? "COD" : STAGE_LABEL[st]}</span>
+                      <span className="rounded border border-current/40 px-2 py-0.5 text-xs">{st === "payment" && r.cod ? "COD" : STAGE_LABEL[st]}</span>
                     </div>
+                  </div>
+                  <div className="text-muted-foreground">
+                    {amountText({ amount: r.amount, payment: r.payment ?? "Prepaid" })}
+                    {r.cod && ` · ${payableText({ amount: r.amount, payment: "COD" })}`}
                   </div>
                   {r.books && <div className="text-muted-foreground">{r.books}</div>}
                   <div className="truncate text-muted-foreground">{r.address}</div>
