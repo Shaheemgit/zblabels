@@ -111,6 +111,22 @@ export function clearDraft() {
   if (typeof window !== "undefined") window.localStorage.removeItem(DRAFT_KEY);
 }
 
+const LABELED_KEY = "zawiya.labeledKeys";
+
+// Sheet-row keys whose label was already queued, so the dashboard can highlight them.
+export function loadLabeledKeys(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(window.localStorage.getItem(LABELED_KEY) || "[]") as string[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveLabeledKeys(keys: string[]) {
+  if (typeof window !== "undefined") window.localStorage.setItem(LABELED_KEY, JSON.stringify(keys));
+}
+
 const HISTORY_KEY = "zawiya.history";
 
 export type LabelBatch<T> = { id: string; createdAt: string; orders: T[] };
