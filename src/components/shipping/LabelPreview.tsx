@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { INSTAGRAM_URL, LABELS_PER_PAGE, qrDataUrl } from "@/lib/shipping/pdf";
-import { amountText, payableText, senderLines, type Order, type Sender } from "@/lib/shipping/types";
+import { amountText, codAmountText, INDIA_POST_CUSTOMER_ID, payableText, senderLines, type Order, type Sender } from "@/lib/shipping/types";
 import { parseBooks } from "@/lib/shipping/whatsapp";
 
 function bookNames(o: Order): string[] {
@@ -110,13 +110,21 @@ function LabelCard({
 }) {
   return (
     <div className="zlabel">
-      <div>
-        <div style={{ fontSize: "13pt", fontWeight: 700, letterSpacing: "0.02em" }}>
-          ZAWIYA BOOKS
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "2mm", alignItems: "flex-start" }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: "13pt", fontWeight: 700, letterSpacing: "0.02em" }}>
+            ZAWIYA BOOKS
+          </div>
+          <div style={{ fontSize: "6.5pt", letterSpacing: "0.12em" }}>BOOK SHIPMENT</div>
+          <div style={{ fontSize: "8.5pt", fontWeight: 700, marginTop: "1.5mm", paddingBottom: "1.5mm", borderBottom: "0.4mm solid #000" }}>
+            {order.post || "BOOK DELIVERY"} · {order.payment.toUpperCase()}
+          </div>
         </div>
-        <div style={{ fontSize: "6.5pt", letterSpacing: "0.12em" }}>BOOK SHIPMENT</div>
-        <div style={{ fontSize: "8.5pt", fontWeight: 700, marginTop: "1.5mm", paddingBottom: "1.5mm", borderBottom: "0.4mm solid #000" }}>
-          {order.post || "BOOK DELIVERY"} · {order.payment.toUpperCase()}
+        <div style={{ textAlign: "right", flexShrink: 0 }}>
+          <div style={{ fontSize: "10.5pt", fontWeight: 700 }}>Customer ID: {INDIA_POST_CUSTOMER_ID}</div>
+          {order.payment === "COD" && (
+            <div style={{ fontSize: "11.5pt", fontWeight: 700 }}>COD Amount: {codAmountText(order)}</div>
+          )}
         </div>
       </div>
 
