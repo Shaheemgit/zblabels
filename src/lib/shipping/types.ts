@@ -53,6 +53,9 @@ export function senderLines(s: Sender): string[] {
 
 export const COD_HANDLING_PCT = 0.02;
 
+// The owner's fixed India Post customer ID — the same for every order, printed on all labels.
+export const INDIA_POST_CUSTOMER_ID = "1962802527";
+
 export function orderTotals(o: Pick<Order, "amount" | "payment">) {
   // Amount comes from the Google Sheet order (or manual entry) — no fixed preset price.
   const total = o.amount;
@@ -71,4 +74,9 @@ export function payableText(o: Pick<Order, "amount" | "payment">, rupee = "₹")
   return o.payment === "COD" && t.codCharge > 0
     ? `Total payable: ${rupee}${t.payable} (incl. ${rupee}${t.codCharge} COD charge)`
     : `Total payable: ${rupee}${t.payable}`;
+}
+
+// COD amount collected on delivery: the total payable including the 2% COD charge.
+export function codAmountText(o: Pick<Order, "amount" | "payment">, rupee = "Rs. ") {
+  return `${rupee}${orderTotals(o).payable}`;
 }
