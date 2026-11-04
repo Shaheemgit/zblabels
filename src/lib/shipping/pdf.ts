@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
-import { codAmountText, orderTotals, INDIA_POST_CUSTOMER_ID, senderLines, type Order, type Sender } from "./types";
+import { amountText, codAmountText, orderTotals, payableText, INDIA_POST_CUSTOMER_ID, senderLines, type Order, type Sender } from "./types";
 import { parseBooks } from "./whatsapp";
 
 export const LABELS_PER_PAGE = 4;
@@ -44,14 +44,24 @@ function drawLabel(
   doc.setLineWidth(0.5);
   doc.rect(x, y, LABEL_W, LABEL_H);
 
-  // Header
+  // Header — customer ID (and COD amount) at the top right, like the paper strip used at the post office.
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.text("ZAWIYA BOOKS", left, cursor);
+  const headerRight = x + LABEL_W - pad;
+  doc.setFontSize(10.5);
+  doc.text(`Customer ID: ${INDIA_POST_CUSTOMER_ID}`, headerRight, cursor, { align: "right" });
   cursor += 4;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.text("BOOK SHIPMENT", left, cursor);
+  if (order.payment === "COD") {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11.5);
+    doc.text(`COD Amount: ${codAmountText(order)}`, headerRight, cursor + 1, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+  }
   cursor += 4.5;
 
   doc.setFont("helvetica", "bold");
