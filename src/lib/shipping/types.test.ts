@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { amountText, orderTotals, payableText } from "./types";
+import { amountText, codAmountText, INDIA_POST_CUSTOMER_ID, orderTotals, payableText } from "./types";
+
+describe("label customer ID and COD amount", () => {
+  it("uses the fixed India Post customer ID 1962802527", () => {
+    expect(INDIA_POST_CUSTOMER_ID).toBe("1962802527");
+  });
+
+  it("COD amount is the total payable including the 2% charge", () => {
+    expect(codAmountText({ amount: 295, payment: "COD" })).toBe("Rs. 301");
+    expect(codAmountText({ amount: 1210, payment: "COD" })).toBe("Rs. 1234");
+  });
+});
+
 
 describe("label price summary", () => {
   it("prepaid is ₹290 with free delivery", () => {
