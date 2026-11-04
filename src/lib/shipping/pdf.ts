@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
-import { amountText, orderTotals, payableText, senderLines, type Order, type Sender } from "./types";
+import { codAmountText, orderTotals, INDIA_POST_CUSTOMER_ID, senderLines, type Order, type Sender } from "./types";
 import { parseBooks } from "./whatsapp";
 
 export const LABELS_PER_PAGE = 4;
