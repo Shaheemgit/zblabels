@@ -1,15 +1,9 @@
 import jsPDF from "jspdf";
-import QRCode from "qrcode";
 import { amountText, codAmountText, orderTotals, payableText, INDIA_POST_CUSTOMER_ID, senderLines, type Order, type Sender } from "./types";
 import { parseBooks } from "./whatsapp";
+import { barcodeSvgDataUrl } from "./barcode";
 
 export const LABELS_PER_PAGE = 4;
-export const INSTAGRAM_URL = "https://www.instagram.com/zawiyabooks.online/";
-
-export async function qrDataUrl(text: string): Promise<string> {
-  return QRCode.toDataURL(text, { errorCorrectionLevel: "M", margin: 1, width: 512 });
-}
-
 export function pdfFileName(count: number): string {
   const d = new Date();
   const date = [
@@ -31,7 +25,6 @@ function drawLabel(
   doc: jsPDF,
   order: Order,
   sender: Sender,
-  qr: string | null,
   x: number,
   y: number,
 ) {
@@ -150,19 +143,24 @@ function drawLabel(
   }
   doc.setFont("helvetica", "normal");
 
-  // Thank-you note and Instagram QR anchored to the bottom
+  // Thank-you note and consignment barcode anchored to the bottom
   const trackTop = y + LABEL_H - 22;
   doc.setLineWidth(0.3);
   doc.line(left, trackTop, x + LABEL_W - pad, trackTop);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  doc.text("Thank you for shopping with Zawiya Books!", left, trackTop + 7, { maxWidth: innerW - 20 });
-  if (qr) doc.addImage(qr, "PNG", x + LABEL_W - pad - 18, trackTop + 2, 18, 18);
+  doc.text("Thank you for shopping with Zawiya Books!", left, trackTop + 7, { maxWidth: innerW - 36 });
+  if (order.tracking) {
+    const barcode = barcodeSvgDataUrl(order.tracking);
+    doc.addImage(barcode, "SVG", x + LABEL_W - pad - 35, trackTop + 3, 35, 12);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.text(order.tracking, x + LABEL_W - pad - 17.5, trackTop + 18, { align: "center" });
+  }
 }
 
 export async function buildLabelsPdf(orders: Order[], sender: Sender): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-  const qr = await qrDataUrl(INSTAGRAM_URL);
 
   orders.forEach((order, i) => {
     const slot = i % LABELS_PER_PAGE;
@@ -173,7 +171,6 @@ export async function buildLabelsPdf(orders: Order[], sender: Sender): Promise<j
       doc,
       order,
       sender,
-      qr,
       MARGIN + col * (LABEL_W + GAP),
       MARGIN + row * (LABEL_H + GAP),
     );
