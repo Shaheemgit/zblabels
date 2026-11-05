@@ -4,6 +4,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isIndiaPostConsignmentNumber, statusWriteValue, type WriteStage } from "./sheet";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
 const SPREADSHEET_ID = "1_biaElVDh_qm8z6ZfRKI4BLQUaa_g7Dh-w8Cd9ef-JA";
@@ -121,7 +123,7 @@ export const allocateTrackingNumbers = createServerFn({ method: "POST" })
       const { data: allocated, error } = await context.supabase.rpc("allocate_india_post_barcode", {
         p_assignment_key: order.sheetRow === undefined
           ? `order:${order.id}`
-          : `sheet:${order.sheetRow}:${order.sheetKey ?? order.sheetRow}`,
+          : `sheet:${order.sheetRow}:${bytesToHex(sha256(utf8ToBytes(order.sheetKey ?? String(order.sheetRow))))}`,
       });
       if (error || !allocated) throw new Error(error?.message ?? "Could not allocate a tracking barcode");
       assigned.push({ id: order.id, tracking: allocated, ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }) });
