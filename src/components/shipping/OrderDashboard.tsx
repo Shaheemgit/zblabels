@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { STAGES, stageMessage, waLink, type Stage } from "@/lib/shipping/whatsapp";
 import {
-  ORDER_SHEET, fetchSheetRows, isPendingPrepaid, stageOf, statusWriteValue, unlabeledKeysThrough,
+  ORDER_SHEET, fetchSheetRows, isPendingPrepaid, labelCutoffContactKeys, stageOf, statusWriteValue, unlabeledKeysThrough,
   type SheetRow, type WriteStage,
 } from "@/lib/shipping/sheet";
 import { loadLabeledKeys, saveLabeledKeys } from "@/lib/shipping/storage";
@@ -128,6 +128,16 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
     toast.success(`${keys.length} eligible order${keys.length === 1 ? "" : "s"} marked label created through ${target.customer || "this order"}`);
   }
 
+  function markCreatedThroughArshad() {
+    const keys = labelCutoffContactKeys(rows ?? [], "8156821938", labeled);
+    if (keys.length === 0) {
+      toast.error("Could not find eligible orders through contact 8156821938");
+      return;
+    }
+    markLabeled(keys);
+    toast.success(`${keys.length} eligible orders marked label created through Arshad`);
+  }
+
   function makeLabel(r: SheetRow) {
     if (isPendingPrepaid(r)) { toast.error("Payment pending — the label unlocks once payment is received"); return; }
     if (labeled.includes(r.key)) { toast.info("Label already created for this order"); return; }
@@ -162,6 +172,11 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
           </Button>
         )}
       </div>
+      {rows !== null && (
+        <Button variant="outline" className="w-full" onClick={markCreatedThroughArshad}>
+          Mark labels created through Arshad (8156821938)
+        </Button>
+      )}
       {rows !== null && q.trim() && shown.length === 1 && (
         <Button variant="outline" className="w-full" onClick={markCreatedThroughTarget}>
           Mark labels created through {shown[0]?.customer || "this order"}

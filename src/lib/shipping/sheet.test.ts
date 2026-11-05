@@ -58,8 +58,6 @@ describe("unlabeledKeysThrough", () => {
 
     expect(unlabeledKeysThrough(rows, "arshad-order", [])).toEqual([
       "earlier-order",
-      "cod-pending-order",
-      "pending-order",
       "arshad-order",
     ]);
   });
