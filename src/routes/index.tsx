@@ -174,8 +174,14 @@ function App() {
         }));
       }
       const byId = new Map(assignments.map((item) => [item.id, item.tracking]));
-      const prepared = ordersToPrepare.map((order) => ({ ...order, tracking: byId.get(order.id) ?? order.tracking }));
-      setOrders((prev) => prev.map((order) => ({ ...order, tracking: byId.get(order.id) ?? order.tracking })));
+      const prepared = ordersToPrepare.map((order) => {
+        const tracking = byId.get(order.id) ?? order.tracking;
+        return tracking ? { ...order, tracking } : order;
+      });
+      setOrders((prev) => prev.map((order) => {
+        const tracking = byId.get(order.id) ?? order.tracking;
+        return tracking ? { ...order, tracking } : order;
+      }));
       if (userId) {
         await Promise.all(prepared.map((order) => updateOrder(order)));
       }
@@ -233,7 +239,11 @@ function App() {
     const prepared = await prepareLabels(ready);
     if (!prepared) { setBusy(false); return; }
     recordBatch(prepared);
-    setOrders((prev) => prev.map((order) => ({ ...order, tracking: prepared.find((p) => p.id === order.id)?.tracking ?? order.tracking })));
+    const trackingById = new Map(prepared.map((order) => [order.id, order.tracking]));
+    setOrders((prev) => prev.map((order) => {
+      const tracking = trackingById.get(order.id) ?? order.tracking;
+      return tracking ? { ...order, tracking } : order;
+    }));
     setShowPreview(true);
     window.setTimeout(() => window.print(), 300);
     setBusy(false);
@@ -246,7 +256,11 @@ function App() {
     const prepared = await prepareLabels(ready);
     if (prepared) {
       recordBatch(prepared);
-      setOrders((prev) => prev.map((order) => ({ ...order, tracking: prepared.find((p) => p.id === order.id)?.tracking ?? order.tracking })));
+      const trackingById = new Map(prepared.map((order) => [order.id, order.tracking]));
+      setOrders((prev) => prev.map((order) => {
+        const tracking = trackingById.get(order.id) ?? order.tracking;
+        return tracking ? { ...order, tracking } : order;
+      }));
       setShowPreview(true);
     }
     setBusy(false);

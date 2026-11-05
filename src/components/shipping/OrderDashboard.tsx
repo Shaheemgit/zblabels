@@ -99,7 +99,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
       payment: r.payment ?? (r.cod ? "COD" : "Prepaid"), qty: r.qty,
       // Amount comes from the prices written in the books column; fall back to ₹260 per book when none is listed.
       amount: r.amount > 0 ? r.amount : 260 * r.qty,
-      tracking: r.tracking || undefined,
+      ...(r.tracking ? { tracking: r.tracking } : {}),
       sheetRow: r.sheetRow,
     });
     commitOrderSeq(seq);
