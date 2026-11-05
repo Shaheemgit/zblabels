@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -61,7 +62,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Create A4 shipping labels with payment details and a Zawiya Books Instagram QR code.",
+          "Create printable A4 shipping labels with unique India Post tracking barcodes.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -165,7 +166,6 @@ function App() {
           orders: ordersToPrepare.map((order) => ({
             id: order.id,
             ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }),
-            ...(order.tracking ? { tracking: order.tracking } : {}),
           })),
         },
       });
