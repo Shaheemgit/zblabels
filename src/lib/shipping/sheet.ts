@@ -63,6 +63,11 @@ export function stageOf(r: SheetRow): Stage {
   return "order";
 }
 
+// Prepaid orders whose payment is still pending must not get labels yet.
+export function isPendingPrepaid(r: Pick<SheetRow, "cod" | "payStatus">): boolean {
+  return !r.cod && /pending/i.test(r.payStatus);
+}
+
 export async function fetchSheetRows(sheet: SavedSheet): Promise<SheetRow[]> {
   const url = `https://docs.google.com/spreadsheets/d/${sheet.id}/gviz/tq?tqx=out:csv${sheet.gid ? `&gid=${sheet.gid}` : ""}&t=${Date.now()}`;
   const res = await fetch(url);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseSheetAmount, stageOf, statusWriteValue, type SheetRow } from "./sheet";
+import { isPendingPrepaid, parseSheetAmount, stageOf, statusWriteValue, type SheetRow } from "./sheet";
 
 function row(partial: Partial<SheetRow>): SheetRow {
   return {
@@ -29,6 +29,20 @@ describe("stageOf", () => {
 
   it("marks prepaid orders with a received payment status as paid", () => {
     expect(stageOf(row({ cod: false, payStatus: "Payment Received" }))).toBe("payment");
+  });
+});
+
+describe("isPendingPrepaid", () => {
+  it("blocks labels for prepaid orders with a pending payment status", () => {
+    expect(isPendingPrepaid(row({ cod: false, payStatus: "Payment Pending" }))).toBe(true);
+  });
+
+  it("never blocks COD orders, even with pending-style text", () => {
+    expect(isPendingPrepaid(row({ cod: true, payStatus: "COD" }))).toBe(false);
+  });
+
+  it("allows prepaid orders whose payment has been received", () => {
+    expect(isPendingPrepaid(row({ cod: false, payStatus: "Payment Received" }))).toBe(false);
   });
 });
 

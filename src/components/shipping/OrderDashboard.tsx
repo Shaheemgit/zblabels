@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { STAGES, stageMessage, waLink, type Stage } from "@/lib/shipping/whatsapp";
 import {
-  ORDER_SHEET, fetchSheetRows, stageOf, statusWriteValue,
+  ORDER_SHEET, fetchSheetRows, isPendingPrepaid, stageOf, statusWriteValue,
   type SheetRow, type WriteStage,
 } from "@/lib/shipping/sheet";
 import { loadLabeledKeys, saveLabeledKeys } from "@/lib/shipping/storage";
@@ -107,16 +107,18 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
   }
 
   function makeLabel(r: SheetRow) {
+    if (isPendingPrepaid(r)) { toast.error("Payment pending — the label unlocks once payment is received"); return; }
     if (labeled.includes(r.key)) { toast.info("Label already created for this order"); return; }
     addLabel(r);
     markLabeled([r.key]);
     toast.success("Order added to the label queue");
   }
 
-  // Bulk: queue every order currently shown by the filter/search, skipping ones already labeled.
+  // Bulk: queue every order currently shown by the filter/search, skipping ones
+  // already labeled or prepaid orders whose payment is still pending.
   function makeAllLabels() {
-    const pending = shown.filter((r) => !labeled.includes(r.key));
-    if (pending.length === 0) { toast.info("Every shown order already has a label"); return; }
+    const pending = shown.filter((r) => !labeled.includes(r.key) && !isPendingPrepaid(r));
+    if (pending.length === 0) { toast.info("Nothing to queue — shown orders are already labeled or payment is pending"); return; }
     for (const r of pending) addLabel(r);
     markLabeled(pending.map((r) => r.key));
     toast.success(`${pending.length} order${pending.length === 1 ? "" : "s"} added to the label queue`);
@@ -134,7 +136,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
         </Button>
         {rows !== null && shown.length > 0 && (
           <Button className="h-12 flex-1" onClick={makeAllLabels}>
-            Make labels for all ({shown.filter((r) => !labeled.includes(r.key)).length})
+            Make labels for all ({shown.filter((r) => !labeled.includes(r.key) && !isPendingPrepaid(r)).length})
           </Button>
         )}
       </div>
@@ -186,12 +188,20 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                   {r.tracking && <div className="text-muted-foreground">Tracking: {r.tracking}</div>}
 
                   <div className="flex flex-wrap gap-1">
-                    <Button size="sm" variant={isLabeled ? "outline" : "default"} onClick={() => makeLabel(r)}>
-                      {isLabeled ? "✓ Label created" : "Make label"}
-                    </Button>
-                    {/* COD orders are automatically in the payment stage — no "Mark Paid" for them. */}
-                    {writeStages.filter(([ws]) => !(ws === "payment" && r.cod)).map(([ws, label]) => {
-                      const reached = STAGE_RANK[st] >= WRITE_RANK[ws];
+                    {isPendingPrepaid(r) ? (
+                      <span className="rounded-md border border-input px-2 py-1 text-xs text-muted-foreground">
+                        Payment pending — no label yet
+                      </span>
+                    ) : (
+                      <Button size="sm" variant={isLabeled ? "outline" : "default"} onClick={() => makeLabel(r)}>
+                        {isLabeled ? "✓ Label created" : "Make label"}
+                      </Button>
+                    )}
+                    {/* COD orders are paid on delivery: "Cash on Delivery" stands in for "Mark Paid". */}
+                    {writeStages.map(([ws, label]) => {
+                      const isCodPayment = ws === "payment" && r.cod;
+                      const text = isCodPayment ? "Cash on Delivery" : label;
+                      const reached = isCodPayment || STAGE_RANK[st] >= WRITE_RANK[ws];
                       return (
                         <Button
                           key={ws}
@@ -200,7 +210,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                           disabled={reached || saving === `${r.key}:${ws}`}
                           onClick={() => mark(r, ws)}
                         >
-                          {saving === `${r.key}:${ws}` ? "Saving…" : label}
+                          {saving === `${r.key}:${ws}` ? "Saving…" : text}
                         </Button>
                       );
                     })}
