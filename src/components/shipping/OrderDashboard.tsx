@@ -107,16 +107,18 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
   }
 
   function makeLabel(r: SheetRow) {
+    if (isPendingPrepaid(r)) { toast.error("Payment pending — the label unlocks once payment is received"); return; }
     if (labeled.includes(r.key)) { toast.info("Label already created for this order"); return; }
     addLabel(r);
     markLabeled([r.key]);
     toast.success("Order added to the label queue");
   }
 
-  // Bulk: queue every order currently shown by the filter/search, skipping ones already labeled.
+  // Bulk: queue every order currently shown by the filter/search, skipping ones
+  // already labeled or prepaid orders whose payment is still pending.
   function makeAllLabels() {
-    const pending = shown.filter((r) => !labeled.includes(r.key));
-    if (pending.length === 0) { toast.info("Every shown order already has a label"); return; }
+    const pending = shown.filter((r) => !labeled.includes(r.key) && !isPendingPrepaid(r));
+    if (pending.length === 0) { toast.info("Nothing to queue — shown orders are already labeled or payment is pending"); return; }
     for (const r of pending) addLabel(r);
     markLabeled(pending.map((r) => r.key));
     toast.success(`${pending.length} order${pending.length === 1 ? "" : "s"} added to the label queue`);
@@ -134,7 +136,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
         </Button>
         {rows !== null && shown.length > 0 && (
           <Button className="h-12 flex-1" onClick={makeAllLabels}>
-            Make labels for all ({shown.filter((r) => !labeled.includes(r.key)).length})
+            Make labels for all ({shown.filter((r) => !labeled.includes(r.key) && !isPendingPrepaid(r)).length})
           </Button>
         )}
       </div>
