@@ -188,12 +188,20 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                   {r.tracking && <div className="text-muted-foreground">Tracking: {r.tracking}</div>}
 
                   <div className="flex flex-wrap gap-1">
-                    <Button size="sm" variant={isLabeled ? "outline" : "default"} onClick={() => makeLabel(r)}>
-                      {isLabeled ? "✓ Label created" : "Make label"}
-                    </Button>
-                    {/* COD orders are automatically in the payment stage — no "Mark Paid" for them. */}
-                    {writeStages.filter(([ws]) => !(ws === "payment" && r.cod)).map(([ws, label]) => {
-                      const reached = STAGE_RANK[st] >= WRITE_RANK[ws];
+                    {isPendingPrepaid(r) ? (
+                      <span className="rounded-md border border-input px-2 py-1 text-xs text-muted-foreground">
+                        Payment pending — no label yet
+                      </span>
+                    ) : (
+                      <Button size="sm" variant={isLabeled ? "outline" : "default"} onClick={() => makeLabel(r)}>
+                        {isLabeled ? "✓ Label created" : "Make label"}
+                      </Button>
+                    )}
+                    {/* COD orders are paid on delivery: "Cash on Delivery" stands in for "Mark Paid". */}
+                    {writeStages.map(([ws, label]) => {
+                      const isCodPayment = ws === "payment" && r.cod;
+                      const text = isCodPayment ? "Cash on Delivery" : label;
+                      const reached = isCodPayment || STAGE_RANK[st] >= WRITE_RANK[ws];
                       return (
                         <Button
                           key={ws}
@@ -202,7 +210,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                           disabled={reached || saving === `${r.key}:${ws}`}
                           onClick={() => mark(r, ws)}
                         >
-                          {saving === `${r.key}:${ws}` ? "Saving…" : label}
+                          {saving === `${r.key}:${ws}` ? "Saving…" : text}
                         </Button>
                       );
                     })}

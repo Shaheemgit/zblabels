@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseSheetAmount, stageOf, statusWriteValue, type SheetRow } from "./sheet";
+import { isPendingPrepaid, parseSheetAmount, stageOf, statusWriteValue, type SheetRow } from "./sheet";
 
 function row(partial: Partial<SheetRow>): SheetRow {
   return {
