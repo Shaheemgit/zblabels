@@ -71,7 +71,7 @@ describe("unlabeledKeysThrough", () => {
     ];
 
     expect(labelCutoffContactKeys(rows, "8156821938", [])).toEqual(["arshad", "earlier"]);
-    expect(labelCutoffContactKeys(rows, "0000000000", [])).toEqual(["newer"]);
+    expect(labelCutoffContactKeys(rows, "9999999999", [])).toEqual([]);
   });
 });
 
