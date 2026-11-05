@@ -84,7 +84,7 @@ export function unlabeledKeysThrough(
   const labeled = new Set(labeledKeys);
   return rows
     .slice(0, targetIndex + 1)
-    .filter((row) => !labeled.has(row.key) && !isPendingPrepaid(row))
+    .filter((row) => !labeled.has(row.key) && !/pending/i.test(row.payStatus))
     .map((row) => row.key);
 }
 

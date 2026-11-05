@@ -51,6 +51,7 @@ describe("unlabeledKeysThrough", () => {
     const rows = [
       row({ key: "earlier-order" }),
       row({ key: "pending-order", payStatus: "Payment Pending" }),
+      row({ key: "cod-pending-order", cod: true, payStatus: "Payment Pending" }),
       row({ key: "arshad-order", customer: "Arshad പുഴങ്കരയില്ലാത്ത house" }),
       row({ key: "later-order" }),
     ];
