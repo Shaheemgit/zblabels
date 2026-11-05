@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { STAGES, stageMessage, waLink, type Stage } from "@/lib/shipping/whatsapp";
 import {
-  ORDER_SHEET, fetchSheetRows, isPendingPrepaid, stageOf, statusWriteValue, unlabeledKeysThrough,
+  ORDER_SHEET, fetchSheetRows, isPendingPrepaid, labelCutoffContactKeys, stageOf, statusWriteValue, unlabeledKeysThrough,
   type SheetRow, type WriteStage,
 } from "@/lib/shipping/sheet";
 import { loadLabeledKeys, saveLabeledKeys } from "@/lib/shipping/storage";
@@ -114,18 +114,14 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
     });
   }
 
-  function markCreatedThroughTarget() {
-    const target = shown[0];
-    if (!target || !q.trim() || shown.length !== 1) return;
-
-    const keys = unlabeledKeysThrough(rows ?? [], target.key, labeled);
+  function markCreatedThroughArshad() {
+    const keys = labelCutoffContactKeys(rows ?? [], "8156821938", labeled);
     if (keys.length === 0) {
-      toast.info("No eligible unlabeled orders through this customer");
+      toast.error("Could not find eligible orders through contact 8156821938");
       return;
     }
-
     markLabeled(keys);
-    toast.success(`${keys.length} eligible order${keys.length === 1 ? "" : "s"} marked label created through ${target.customer || "this order"}`);
+    toast.success(`${keys.length} eligible orders marked label created through Arshad`);
   }
 
   function makeLabel(r: SheetRow) {
@@ -162,12 +158,11 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
           </Button>
         )}
       </div>
-      {rows !== null && q.trim() && shown.length === 1 && (
-        <Button variant="outline" className="w-full" onClick={markCreatedThroughTarget}>
-          Mark labels created through {shown[0]?.customer || "this order"}
+      {rows !== null && (
+        <Button variant="outline" className="w-full" onClick={markCreatedThroughArshad}>
+          Mark labels created through Arshad (8156821938)
         </Button>
       )}
-
       {rows && (
         <>
           <div className="flex flex-wrap gap-1">

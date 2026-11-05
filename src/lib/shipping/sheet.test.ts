@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isIndiaPostConsignmentNumber, isPendingPrepaid, parseSheetAmount, stageOf, statusWriteValue, unlabeledKeysThrough, type SheetRow } from "./sheet";
+import { isIndiaPostConsignmentNumber, isPendingPrepaid, labelCutoffContactKeys, parseSheetAmount, stageOf, statusWriteValue, unlabeledKeysThrough, type SheetRow } from "./sheet";
 
 function row(partial: Partial<SheetRow>): SheetRow {
   return {
@@ -49,17 +49,29 @@ describe("isPendingPrepaid", () => {
 describe("unlabeledKeysThrough", () => {
   it("marks orders through Arshad's order while excluding pending prepaid orders", () => {
     const rows = [
-      row({ key: "earlier-order" }),
-      row({ key: "pending-order", payStatus: "Payment Pending" }),
-      row({ key: "cod-pending-order", cod: true, payStatus: "Payment Pending" }),
-      row({ key: "arshad-order", customer: "Arshad പുഴങ്കരയില്ലാത്ത house" }),
-      row({ key: "later-order" }),
+      row({ key: "later-order", sheetRow: 6 }),
+      row({ key: "arshad-order", customer: "Arshad", contact: "8156821938", sheetRow: 5 }),
+      row({ key: "cod-pending-order", cod: true, payStatus: "Payment Pending", sheetRow: 4 }),
+      row({ key: "pending-order", payStatus: "Payment Pending", sheetRow: 3 }),
+      row({ key: "earlier-order", sheetRow: 2 }),
     ];
 
     expect(unlabeledKeysThrough(rows, "arshad-order", [])).toEqual([
-      "earlier-order",
       "arshad-order",
+      "earlier-order",
     ]);
+  });
+
+  it("finds the requested contact as a cutoff and excludes every pending-payment row", () => {
+    const rows = [
+      row({ key: "newer", contact: "0000000000", sheetRow: 8 }),
+      row({ key: "arshad", contact: "+91 81568 21938", sheetRow: 5 }),
+      row({ key: "pending", payStatus: "Payment Pending", sheetRow: 4 }),
+      row({ key: "earlier", sheetRow: 2 }),
+    ];
+
+    expect(labelCutoffContactKeys(rows, "8156821938", [])).toEqual(["arshad", "earlier"]);
+    expect(labelCutoffContactKeys(rows, "9999999999", [])).toEqual([]);
   });
 });
 
