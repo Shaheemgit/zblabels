@@ -19,6 +19,8 @@ export type SheetRow = {
   tracking: string; sheetRow: number;
 };
 
+export type TrackingAssignment = { row: number; tracking: string };
+
 // Value written into the sheet's status column for each managed stage.
 export type WriteStage = "payment" | "dispatch" | "delivery";
 export function statusWriteValue(stage: WriteStage): string {
