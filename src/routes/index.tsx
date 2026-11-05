@@ -46,6 +46,7 @@ import {
   insertOrder,
   updateOrder,
 } from "@/lib/shipping/cloud";
+import { allocateTrackingNumbers } from "@/lib/shipping/sheet.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -75,6 +76,7 @@ const cloudErr = () => toast.error("Could not save to your account. Please try a
 
 function App() {
   const { session, userId } = useAuth();
+  const allocateTrackingFn = useServerFn(allocateTrackingNumbers);
   const [sender, setSender] = useState<Sender>(emptySender);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -152,6 +154,31 @@ function App() {
     return selectedOrders;
   }
 
+  async function prepareLabels(ordersToPrepare: Order[]): Promise<Order[] | null> {
+    if (!userId) {
+      toast.error("Sign in with Google to assign unique India Post tracking numbers");
+      return null;
+    }
+    try {
+      const assignments = await allocateTrackingFn({
+        data: {
+          orders: ordersToPrepare.map((order) => ({
+            id: order.id,
+            ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }),
+            ...(order.tracking ? { tracking: order.tracking } : {}),
+          })),
+        },
+      });
+      const byId = new Map(assignments.map((item) => [item.id, item.tracking]));
+      const prepared = ordersToPrepare.map((order) => ({ ...order, tracking: byId.get(order.id) ?? order.tracking }));
+      setOrders((prev) => prev.map((order) => ({ ...order, tracking: byId.get(order.id) ?? order.tracking })));
+      return prepared;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not assign tracking numbers or update the order sheet");
+      return null;
+    }
+  }
+
   function recordBatch(ready: Order[]) {
     const batch = { id: newId(), createdAt: new Date().toISOString(), orders: ready };
     setHistory((prev) => {
@@ -174,15 +201,17 @@ function App() {
   async function downloadPdf() {
     const ready = guardLabels();
     if (!ready) return;
-    recordBatch(ready);
     setBusy(true);
     try {
-      const doc = await buildLabelsPdf(ready, sender);
-      doc.save(pdfFileName(ready.length));
-      const next = generated + ready.length;
+      const prepared = await prepareLabels(ready);
+      if (!prepared) return;
+      recordBatch(prepared);
+      const doc = await buildLabelsPdf(prepared, sender);
+      doc.save(pdfFileName(prepared.length));
+      const next = generated + prepared.length;
       setGenerated(next);
       saveGeneratedCount(next);
-      toast.success(`${ready.length} label${ready.length === 1 ? "" : "s"} saved as PDF`);
+      toast.success(`${prepared.length} label${prepared.length === 1 ? "" : "s"} saved as PDF`);
     } catch {
       toast.error("The PDF could not be created. Please try again.");
     } finally {
@@ -190,12 +219,30 @@ function App() {
     }
   }
 
-  function printLabels() {
+  async function printLabels() {
     const ready = guardLabels();
     if (!ready) return;
-    recordBatch(ready);
+    setBusy(true);
+    const prepared = await prepareLabels(ready);
+    if (!prepared) { setBusy(false); return; }
+    recordBatch(prepared);
+    setOrders((prev) => prev.map((order) => ({ ...order, tracking: prepared.find((p) => p.id === order.id)?.tracking ?? order.tracking })));
     setShowPreview(true);
     window.setTimeout(() => window.print(), 300);
+    setBusy(false);
+  }
+
+  async function previewLabels() {
+    const ready = guardLabels();
+    if (!ready) return;
+    setBusy(true);
+    const prepared = await prepareLabels(ready);
+    if (prepared) {
+      recordBatch(prepared);
+      setOrders((prev) => prev.map((order) => ({ ...order, tracking: prepared.find((p) => p.id === order.id)?.tracking ?? order.tracking })));
+      setShowPreview(true);
+    }
+    setBusy(false);
   }
 
   return (
@@ -318,9 +365,8 @@ function App() {
           <div className="flex flex-wrap gap-2">
             <Button
               className="h-12 flex-1"
-              onClick={() => {
-                if (guardLabels()) setShowPreview(true);
-              }}
+              onClick={previewLabels}
+              disabled={busy}
             >
               Preview Labels
             </Button>
