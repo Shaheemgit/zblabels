@@ -29,6 +29,13 @@
       "when": 1793889261969,
       "tag": "0003_stabilize_barcode_source_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793889992680,
+      "tag": "0004_add_order_tracking_sync_status",
+      "breakpoints": true
     }
   ]
 }

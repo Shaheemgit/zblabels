@@ -35,6 +35,8 @@ export type Order = {
   post: string;
   payment: "Prepaid" | "COD";
   tracking?: string | undefined;
+  trackingSyncStatus?: "pending" | "synced" | "failed" | "not_applicable" | undefined;
+  trackingSyncError?: string | undefined;
   sheetRow?: number | undefined;
   sheetKey?: string | undefined;
 };
