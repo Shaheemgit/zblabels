@@ -32,6 +32,20 @@ describe("stageOf", () => {
   });
 });
 
+describe("isPendingPrepaid", () => {
+  it("blocks labels for prepaid orders with a pending payment status", () => {
+    expect(isPendingPrepaid(row({ cod: false, payStatus: "Payment Pending" }))).toBe(true);
+  });
+
+  it("never blocks COD orders, even with pending-style text", () => {
+    expect(isPendingPrepaid(row({ cod: true, payStatus: "COD" }))).toBe(false);
+  });
+
+  it("allows prepaid orders whose payment has been received", () => {
+    expect(isPendingPrepaid(row({ cod: false, payStatus: "Payment Received" }))).toBe(false);
+  });
+});
+
 describe("parseSheetAmount", () => {
   it("sums a single price written in the books column", () => {
     expect(parseSheetAmount("COMBO 1 💰₹790/-")).toBe(790);
