@@ -72,6 +72,22 @@ export function isPendingPrepaid(r: Pick<SheetRow, "cod" | "payStatus">): boolea
   return !r.cod && /pending/i.test(r.payStatus);
 }
 
+// Mark eligible sheet orders from the top of the displayed list through the selected order.
+export function unlabeledKeysThrough(
+  rows: SheetRow[],
+  targetKey: string,
+  labeledKeys: string[],
+): string[] {
+  const targetIndex = rows.findIndex((row) => row.key === targetKey);
+  if (targetIndex < 0) return [];
+
+  const labeled = new Set(labeledKeys);
+  return rows
+    .slice(0, targetIndex + 1)
+    .filter((row) => !labeled.has(row.key) && !/pending/i.test(row.payStatus))
+    .map((row) => row.key);
+}
+
 export async function fetchSheetRows(sheet: SavedSheet): Promise<SheetRow[]> {
   const url = `https://docs.google.com/spreadsheets/d/${sheet.id}/gviz/tq?tqx=out:csv${sheet.gid ? `&gid=${sheet.gid}` : ""}&t=${Date.now()}`;
   const res = await fetch(url);

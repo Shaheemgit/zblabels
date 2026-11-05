@@ -5,4 +5,5 @@
 - [x] Verify the app loads, barcode renders, sample PDF is readable, and unit tests/typecheck pass.
 - [x] Show each order's tracking-number sheet-write status and provide a safe retry using its already-assigned number.
 - [x] Add a pre-print checklist for recipient details, India Post tracking format, and Google Sheets sync.
+- [x] Add a browser-local bulk action to mark labels created through a chosen order, skipping pending prepaid orders.
 - [ ] Verify signed-in allocation and Google Sheet write-back after the owner signs in to the preview.

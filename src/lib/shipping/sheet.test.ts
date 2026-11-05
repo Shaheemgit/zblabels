@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isIndiaPostConsignmentNumber, isPendingPrepaid, parseSheetAmount, stageOf, statusWriteValue, type SheetRow } from "./sheet";
+import { isIndiaPostConsignmentNumber, isPendingPrepaid, parseSheetAmount, stageOf, statusWriteValue, unlabeledKeysThrough, type SheetRow } from "./sheet";
 
 function row(partial: Partial<SheetRow>): SheetRow {
   return {
@@ -43,6 +43,23 @@ describe("isPendingPrepaid", () => {
 
   it("allows prepaid orders whose payment has been received", () => {
     expect(isPendingPrepaid(row({ cod: false, payStatus: "Payment Received" }))).toBe(false);
+  });
+});
+
+describe("unlabeledKeysThrough", () => {
+  it("marks orders through Arshad's order while excluding pending prepaid orders", () => {
+    const rows = [
+      row({ key: "earlier-order" }),
+      row({ key: "pending-order", payStatus: "Payment Pending" }),
+      row({ key: "cod-pending-order", cod: true, payStatus: "Payment Pending" }),
+      row({ key: "arshad-order", customer: "Arshad പുഴങ്കരയില്ലാത്ത house" }),
+      row({ key: "later-order" }),
+    ];
+
+    expect(unlabeledKeysThrough(rows, "arshad-order", [])).toEqual([
+      "earlier-order",
+      "arshad-order",
+    ]);
   });
 });
 
