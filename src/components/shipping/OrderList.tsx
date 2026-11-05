@@ -89,6 +89,9 @@ export function OrderList({
                               ? "No linked Google Sheet row"
                               : "Google Sheets sync not checked"}
                       </span>
+                      {order.trackingSyncError && order.trackingSyncStatus === "failed" && (
+                        <span className="basis-full text-destructive">{order.trackingSyncError}</span>
+                      )}
                       {order.trackingSyncStatus === "failed" && (
                         <Button
                           size="sm"

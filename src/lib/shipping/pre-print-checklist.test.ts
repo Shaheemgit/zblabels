@@ -24,7 +24,7 @@ function order(overrides: Partial<Order> = {}): Order {
 
 describe("pre-print checklist", () => {
   it("flags missing recipient name, address, postal code, and contact number", () => {
-    const [check] = buildPrePrintChecklist(order({ customer: " ", address: "", pin: "", mobile: "" }) ? [order({ customer: " ", address: "", pin: "", mobile: "" })] : []);
+    const [check] = buildPrePrintChecklist([order({ customer: " ", address: "", pin: "", mobile: "" })]);
     expect(check?.missingRecipientDetails).toEqual(["Customer name", "Address", "PIN / postal code", "Contact number"]);
   });
 
@@ -36,12 +36,12 @@ describe("pre-print checklist", () => {
   it("flags a sheet-linked tracking number whose write failed", () => {
     const [check] = buildPrePrintChecklist([order({ trackingSyncStatus: "failed" })]);
     expect(check?.syncStatus).toBe("failed");
-    expect(checklistHasWarnings([check as NonNullable<typeof check>])).toBe(true);
+    expect(check && checklistHasWarnings([check])).toBe(true);
   });
 
   it("does not claim a local-only order needs Google Sheets sync", () => {
     const [check] = buildPrePrintChecklist([order({ sheetRow: undefined, trackingSyncStatus: "not_applicable" })]);
     expect(check?.syncStatus).toBe("not_applicable");
-    expect(checklistHasWarnings([check as NonNullable<typeof check>])).toBe(false);
+    expect(check && checklistHasWarnings([check])).toBe(false);
   });
 });

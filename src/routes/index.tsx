@@ -49,6 +49,9 @@ import {
   updateOrder,
 } from "@/lib/shipping/cloud";
 import { allocateTrackingNumbers, retryTrackingSheetWrite } from "@/lib/shipping/sheet.functions";
+import { buildPrePrintChecklist, checklistHasWarnings } from "@/lib/shipping/pre-print-checklist";
+
+type LabelAction = "preview" | "download" | "print";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -96,6 +99,8 @@ function App() {
   const [history, setHistory] = useState<LabelBatch<Order>[]>([]);
   const [viewBatch, setViewBatch] = useState<string | null>(null);
   const [retryingSyncIds, setRetryingSyncIds] = useState<string[]>([]);
+  const [checklistOpen, setChecklistOpen] = useState(false);
+  const [pendingLabelAction, setPendingLabelAction] = useState<LabelAction | null>(null);
 
   useEffect(() => {
     setSender(loadSender());
@@ -145,6 +150,22 @@ function App() {
     () => orders.filter((o) => selected.includes(o.id)),
     [orders, selected],
   );
+  const prePrintChecks = useMemo(() => buildPrePrintChecklist(selectedOrders), [selectedOrders]);
+
+  function requestLabelAction(action: LabelAction) {
+    if (!guardLabels()) return;
+    setPendingLabelAction(action);
+    setChecklistOpen(true);
+  }
+
+  function continueLabelAction() {
+    const action = pendingLabelAction;
+    setChecklistOpen(false);
+    setPendingLabelAction(null);
+    if (action === "preview") void previewLabels();
+    if (action === "download") void downloadPdf();
+    if (action === "print") void printLabels();
+  }
   function addOrder(order: Omit<Order, "id">) {
     const created = { ...order, id: newId() };
     setOrders((prev) => [...prev, created]);
@@ -427,16 +448,16 @@ function App() {
           <div className="flex flex-wrap gap-2">
             <Button
               className="h-12 flex-1"
-              onClick={previewLabels}
+              onClick={() => requestLabelAction("preview")}
               disabled={busy}
             >
               Preview Labels
             </Button>
-            <Button variant="outline" className="h-12 flex-1" onClick={downloadPdf} disabled={busy}>
+            <Button variant="outline" className="h-12 flex-1" onClick={() => requestLabelAction("download")} disabled={busy}>
               <FileDown className="mr-2 h-4 w-4" />
               {busy ? "Preparing…" : "Download PDF"}
             </Button>
-            <Button variant="outline" className="h-12 flex-1" onClick={printLabels}>
+            <Button variant="outline" className="h-12 flex-1" onClick={() => requestLabelAction("print")} disabled={busy}>
               <Printer className="mr-2 h-4 w-4" />
               Print Labels
             </Button>
@@ -510,8 +531,51 @@ function App() {
         </div>
       )}
 
+      <AlertDialog open={checklistOpen} onOpenChange={setChecklistOpen}>
+        <AlertDialogContent className="max-h-[85vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Review labels before printing</AlertDialogTitle>
+            <AlertDialogDescription>
+              {checklistHasWarnings(prePrintChecks)
+                ? "Some labels need attention. Review each order before continuing."
+                : "All selected labels passed the recipient, tracking, and sheet-sync checks."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="max-h-[50vh] space-y-2 overflow-y-auto">
+            {prePrintChecks.map((check) => (
+              <div key={check.order.id} className="space-y-1 rounded-md border p-3 text-sm">
+                <div className="font-medium">{check.order.orderId} · {check.order.customer || "No customer name"}</div>
+                {check.missingRecipientDetails.length > 0 ? (
+                  <div className="text-destructive">Missing: {check.missingRecipientDetails.join(", ")}</div>
+                ) : (
+                  <div className="text-muted-foreground">Recipient details complete</div>
+                )}
+                <div className={check.validTrackingNumber ? "text-muted-foreground" : "text-destructive"}>
+                  {check.validTrackingNumber ? `Tracking number valid: ${check.order.tracking}` : "Tracking number missing or invalid"}
+                </div>
+                <div className={check.syncStatus === "failed" || check.syncStatus === "needs_review" ? "text-destructive" : "text-muted-foreground"}>
+                  {check.syncStatus === "synced"
+                    ? "Tracking number saved to Google Sheets"
+                    : check.syncStatus === "failed"
+                      ? "Tracking number was not saved to Google Sheets"
+                      : check.syncStatus === "needs_review"
+                        ? "Google Sheets sync status is unknown"
+                        : "Local order — no Google Sheet sync required"}
+                </div>
+              </div>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Back to orders</AlertDialogCancel>
+            <AlertDialogAction onClick={continueLabelAction}>
+              {checklistHasWarnings(prePrintChecks) ? "Continue anyway" : "Continue"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="fixed inset-x-0 bottom-0 border-t bg-background p-3 print:hidden sm:hidden">
-        <Button className="h-12 w-full" onClick={downloadPdf} disabled={busy}>
+        <Button className="h-12 w-full" onClick={() => requestLabelAction("download")} disabled={busy}>
           Generate Labels ({selectedOrders.length})
         </Button>
       </div>
