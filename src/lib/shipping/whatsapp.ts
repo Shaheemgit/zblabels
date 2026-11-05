@@ -32,8 +32,15 @@ export function parseBooks(books: string) {
 const fmt = (n: number) => n.toLocaleString("en-IN");
 
 export function stageMessage(stage: Stage, { name, books, cod }: MsgInput): string {
-  if (stage === "payment")
+  if (stage === "payment") {
+    if (cod) {
+      const list = parseBooks(books);
+      const subtotal = list.reduce((s, b) => s + b.price, 0);
+      const total = subtotal + Math.round(subtotal * 0.02);
+      return `👋 Hi ${name},\n\n✅ Your order has been confirmed!\n\n💵 Payment method: Cash on Delivery — ₹${fmt(total)} will be collected when your package is delivered.\n\n📚 Thank you for choosing Zawiya Books. We'll notify you once your package is dispatched.\n\n❤️ We appreciate your support!\n\n📖 — Zawiya Books`;
+    }
     return `👋 Hi ${name},\n\n✅ Your payment has been received successfully!\n\n📚 Thank you for choosing Zawiya Books. Your order is now confirmed, and we'll notify you once your package is dispatched.\n\n❤️ We appreciate your support!\n\n📖 — Zawiya Books`;
+  }
   if (stage === "dispatch")
     return `👋 Hi ${name},\n\n📦 Great news! Your order has been dispatched successfully! 🎉\n\n🚚 Your package has been handed over to India Post and is on its way to you.\n\n❤️ We hope you enjoy your reading experience!\n\n🙏 Thank you for choosing Zawiya Books!`;
   if (stage === "feedback")
