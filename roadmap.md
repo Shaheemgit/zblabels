@@ -1,5 +1,6 @@
 - [x] Seed and safely allocate the uploaded one-time barcode pool.
 - [x] Persist tracking numbers with orders and write sheet-linked numbers to Google Sheets during label generation.
 - [x] Replace QR graphics with Code 128 tracking barcodes in label preview and PDF.
+- [x] Keep previously generated label history barcode-free; enable barcodes only for labels generated from now onward.
 - [x] Verify the app loads, barcode renders, sample PDF is readable, and unit tests/typecheck pass.
 - [ ] Verify signed-in allocation and Google Sheet write-back after the owner signs in to the preview.

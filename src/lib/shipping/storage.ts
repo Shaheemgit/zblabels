@@ -129,6 +129,14 @@ export function saveLabeledKeys(keys: string[]) {
 
 const HISTORY_KEY = "zawiya.history";
 
+// Labels generated before this change remain barcode-free when viewed or downloaded again.
+export const BARCODE_LABELS_START_AT = "2026-11-05T14:39:30.000Z";
+
+export function labelBatchSupportsBarcodes(createdAt: string): boolean {
+  const createdAtMs = Date.parse(createdAt);
+  return Number.isFinite(createdAtMs) && createdAtMs >= Date.parse(BARCODE_LABELS_START_AT);
+}
+
 export type LabelBatch<T> = { id: string; createdAt: string; orders: T[] };
 
 export function loadHistory<T>(): LabelBatch<T>[] {

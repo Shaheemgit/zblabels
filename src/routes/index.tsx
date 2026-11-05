@@ -32,6 +32,7 @@ import {
   saveGeneratedCount,
   saveOrders,
   saveSelected,
+  labelBatchSupportsBarcodes,
 } from "@/lib/shipping/storage";
 import { emptySender, senderIsComplete, type Order, type Sender } from "@/lib/shipping/types";
 import { useAuth } from "@/hooks/useAuth";
@@ -74,6 +75,12 @@ export const Route = createFileRoute("/")({
 const isUuid = (s: string) => /^[0-9a-f-]{36}$/i.test(s);
 const newId = () => crypto.randomUUID();
 const cloudErr = () => toast.error("Could not save to your account. Please try again.");
+
+function ordersForBatch(batch: LabelBatch<Order>): Order[] {
+  return labelBatchSupportsBarcodes(batch.createdAt)
+    ? batch.orders
+    : batch.orders.map((order) => ({ ...order, tracking: undefined }));
+}
 
 function App() {
   const { session, userId } = useAuth();
@@ -206,7 +213,7 @@ function App() {
 
   async function redownload(batch: LabelBatch<Order>) {
     try {
-      const doc = await buildLabelsPdf(batch.orders, sender);
+      const doc = await buildLabelsPdf(ordersForBatch(batch), sender);
       doc.save(pdfFileName(batch.orders.length));
     } catch {
       toast.error("The PDF could not be created. Please try again.");
@@ -454,7 +461,7 @@ function App() {
                   </div>
                   {viewBatch === b.id && (
                     <div className="mt-3">
-                      <LabelPreview orders={b.orders} sender={sender} />
+                      <LabelPreview orders={ordersForBatch(b)} sender={sender} />
                     </div>
                   )}
                 </div>
