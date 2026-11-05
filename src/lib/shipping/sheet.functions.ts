@@ -3,7 +3,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { statusWriteValue, type WriteStage } from "./sheet";
+import { statusWriteValue, type TrackingAssignment, type WriteStage } from "./sheet";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
 const SPREADSHEET_ID = "1_biaElVDh_qm8z6ZfRKI4BLQUaa_g7Dh-w8Cd9ef-JA";
@@ -11,7 +11,7 @@ const SHEET_GID = 1229129423;
 
 export type WriteStageInput = "payment" | "dispatch" | "delivery";
 
-type SheetMeta = { title: string; letters: Record<WriteStageInput, string>; at: number };
+type SheetMeta = { title: string; letters: Record<WriteStageInput | "tracking", string>; at: number };
 let metaCache: SheetMeta | null = null;
 
 function a1(n: number): string {
@@ -64,6 +64,7 @@ async function loadMeta(): Promise<SheetMeta> {
     payment: find("payment", "status"),
     dispatch: find("dispatch", "status"),
     delivery: find("status", "deliv"), // matches the sheet's "Delivety status " header typo
+    tracking: find("tracking", "number"),
   };
   metaCache = { title, letters, at: Date.now() };
   return metaCache;
@@ -90,4 +91,25 @@ export const updateSheetStatus = createServerFn({ method: "POST" })
       },
     );
     return { ok: true, cell, value };
+  });
+
+export const updateSheetTrackingNumbers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z.object({ assignments: z.array(z.object({ row: z.number().int().min(2), tracking: z.string().regex(/^ZB\d{9}IN$/) })).min(1).max(100) }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { title, letters } = await loadMeta();
+    const cells = data.assignments.map(({ row, tracking }) => ({ row, tracking }));
+    for (const item of cells) {
+      await gateway(
+        `/spreadsheets/${SPREADSHEET_ID}/values/${quotedRange(title, `${letters.tracking}${item.row}`)}?valueInputOption=USER_ENTERED`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ values: [[item.tracking]] }),
+        },
+      );
+    }
+    return { ok: true, updated: cells.length };
   });
