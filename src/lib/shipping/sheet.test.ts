@@ -77,6 +77,7 @@ describe("statusWriteValue", () => {
 describe("consignment barcode validation", () => {
   it("accepts the supplied India Post code format", () => {
     expect(isIndiaPostConsignmentNumber("ZB994627555IN")).toBe(true);
+    expect(isIndiaPostConsignmentNumber("ZB994637544IN")).toBe(true);
   });
 
   it("rejects malformed codes instead of inventing a replacement", () => {
