@@ -78,14 +78,30 @@ export function unlabeledKeysThrough(
   targetKey: string,
   labeledKeys: string[],
 ): string[] {
-  const targetIndex = rows.findIndex((row) => row.key === targetKey);
-  if (targetIndex < 0) return [];
+  const target = rows.find((row) => row.key === targetKey);
+  if (!target) return [];
 
   const labeled = new Set(labeledKeys);
   return rows
-    .slice(0, targetIndex + 1)
+    .filter((row) => row.sheetRow <= target.sheetRow)
     .filter((row) => !labeled.has(row.key) && !/pending/i.test(row.payStatus))
     .map((row) => row.key);
+}
+
+export function labelCutoffContactKeys(
+  rows: SheetRow[],
+  contactNumber: string,
+  labeledKeys: string[],
+): string[] {
+  const digits = contactNumber.replace(/\D/g, "");
+  if (!digits) return [];
+
+  const target = rows
+    .filter((row) => row.contact.replace(/\D/g, "").endsWith(digits))
+    .reduce<SheetRow | null>((latest, row) =>
+      !latest || row.sheetRow > latest.sheetRow ? row : latest, null);
+
+  return target ? unlabeledKeysThrough(rows, target.key, labeledKeys) : [];
 }
 
 export async function fetchSheetRows(sheet: SavedSheet): Promise<SheetRow[]> {
