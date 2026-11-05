@@ -13,7 +13,7 @@ import { updateSheetStatus } from "@/lib/shipping/sheet.functions";
 import { amountText, payableText, type Order } from "@/lib/shipping/types";
 import { DEFAULT_BOOK, DEFAULT_POST, commitOrderSeq, formatOrderId, peekOrderSeq } from "@/lib/shipping/storage";
 
-type Filter = "all" | Stage | "labeled";
+type Filter = "all" | Stage | "labeled" | "unlabeled";
 
 const STAGE_LABEL: Record<Stage, string> = {
   order: "New", payment: "Paid", dispatch: "Dispatched", feedback: "Delivered",
@@ -52,16 +52,17 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
   }, []);
 
   const counts = useMemo(() => {
-    const c: Record<Filter, number> = { all: (rows ?? []).length, order: 0, payment: 0, dispatch: 0, feedback: 0, labeled: 0 };
+    const c: Record<Filter, number> = { all: (rows ?? []).length, order: 0, payment: 0, dispatch: 0, feedback: 0, labeled: 0, unlabeled: 0 };
     for (const r of rows ?? []) {
       c[stageOf(r)]++;
-      if (labeled.includes(r.key)) c.labeled++;
+      if (labeled.includes(r.key)) c.labeled++; else c.unlabeled++;
     }
     return c;
   }, [rows, labeled]);
 
   const shown = useMemo(() => (rows ?? []).filter((r) => {
     if (filter === "labeled") { if (!labeled.includes(r.key)) return false; }
+    else if (filter === "unlabeled") { if (labeled.includes(r.key)) return false; }
     else if (filter !== "all" && stageOf(r) !== filter) return false;
     const s = q.trim().toLowerCase();
     return !s || [r.customer, r.pin, r.contact, r.whatsapp, r.books, r.tracking].some((v) => v.toLowerCase().includes(s));
@@ -148,9 +149,9 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
       {rows && (
         <>
           <div className="flex flex-wrap gap-1">
-            {(["all", "order", "payment", "dispatch", "feedback", "labeled"] as Filter[]).map((f) => (
+            {(["all", "order", "payment", "dispatch", "feedback", "labeled", "unlabeled"] as Filter[]).map((f) => (
               <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f)}>
-                {f === "all" ? "All" : f === "labeled" ? "Label created" : STAGE_LABEL[f]} ({counts[f]})
+                {f === "all" ? "All" : f === "labeled" ? "Label created" : f === "unlabeled" ? "Not labeled" : STAGE_LABEL[f]} ({counts[f]})
               </Button>
             ))}
           </div>
