@@ -220,7 +220,8 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                     {STAGES.map((s) => (
                       <Button key={s.id} asChild size="sm" variant={s.id === st ? "default" : "outline"} disabled={!r.whatsapp}>
                         <a href={r.whatsapp ? waLink(r.whatsapp, stageMessage(s.id, { name: r.customer, books: r.books, cod: r.cod })) : undefined} target="_blank" rel="noreferrer">
-                          {s.label}
+                            {/* COD orders confirm with "Cash on Delivery", not "Payment Received". */}
+                            {(s.id === "payment" && r.cod ? "💵 Cash on Delivery" : s.label)}
                         </a>
                       </Button>
                     ))}
