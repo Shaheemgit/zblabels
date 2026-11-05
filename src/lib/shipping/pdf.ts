@@ -1,15 +1,9 @@
 import jsPDF from "jspdf";
-import QRCode from "qrcode";
 import { amountText, codAmountText, orderTotals, payableText, INDIA_POST_CUSTOMER_ID, senderLines, type Order, type Sender } from "./types";
 import { parseBooks } from "./whatsapp";
+import { barcodePngDataUrl } from "./barcode";
 
 export const LABELS_PER_PAGE = 4;
-export const INSTAGRAM_URL = "https://www.instagram.com/zawiyabooks.online/";
-
-export async function qrDataUrl(text: string): Promise<string> {
-  return QRCode.toDataURL(text, { errorCorrectionLevel: "M", margin: 1, width: 512 });
-}
-
 export function pdfFileName(count: number): string {
   const d = new Date();
   const date = [
@@ -31,7 +25,7 @@ function drawLabel(
   doc: jsPDF,
   order: Order,
   sender: Sender,
-  qr: string | null,
+  barcode: string | null,
   x: number,
   y: number,
 ) {
@@ -51,7 +45,7 @@ function drawLabel(
   const headerRight = x + LABEL_W - pad;
   doc.setFontSize(10.5);
   doc.text(`Customer ID: ${INDIA_POST_CUSTOMER_ID}`, headerRight, cursor, { align: "right" });
-  cursor += 4;
+  cursor += 3.5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.text("BOOK SHIPMENT", left, cursor);
@@ -79,18 +73,18 @@ function drawLabel(
   cursor += 4;
   doc.setFontSize(8.5);
   doc.text(sender.name || "-", left, cursor);
-  cursor += 3.6;
+  cursor += 3;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   for (const line of senderLines(sender)) {
     const wrapped = doc.splitTextToSize(line, innerW) as string[];
     for (const w of wrapped) {
       doc.text(w, left, cursor);
-      cursor += 3.2;
+      cursor += 2.7;
     }
   }
   doc.text(`PIN: ${sender.pin}${sender.mobile ? `   Mobile: ${sender.mobile}` : ""}`, left, cursor);
-  cursor += 3.5;
+  cursor += 2.8;
   doc.setLineWidth(0.3);
   doc.line(left, cursor, x + LABEL_W - pad, cursor);
   cursor += 4;
@@ -103,24 +97,24 @@ function drawLabel(
   doc.setFontSize(13);
   for (const w of doc.splitTextToSize(order.customer || "-", innerW) as string[]) {
     doc.text(w, left, cursor);
-    cursor += 5.4;
+    cursor += 4.5;
   }
   cursor += 0.6;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   for (const w of doc.splitTextToSize(order.address || "-", innerW) as string[]) {
     doc.text(w, left, cursor);
-    cursor += 4;
+    cursor += 3.2;
   }
   cursor += 1.5;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.text(`PIN: ${order.pin}`, left, cursor);
-  cursor += 4;
+  cursor += 3.2;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.text(`Mobile: ${order.mobile || "-"}`, left, cursor);
-  cursor += 3.5;
+  cursor += 2.8;
   doc.setLineWidth(0.3);
   doc.line(left, cursor, x + LABEL_W - pad, cursor);
   cursor += 4;
@@ -128,7 +122,7 @@ function drawLabel(
   // Order details
   doc.setFontSize(7.5);
   doc.text(`Order ID: ${order.orderId}`, left, cursor);
-  cursor += 3.4;
+  cursor += 2.8;
   const bookNames = parseBooks(order.book || "").map((b) => b.name).filter(Boolean);
   const bookLines = bookNames.length > 1
     ? bookNames.map((n, i) => `Book ${i + 1}: ${n}`)
@@ -136,33 +130,41 @@ function drawLabel(
   for (const line of bookLines) {
     for (const w of doc.splitTextToSize(line, innerW) as string[]) {
       doc.text(w, left, cursor);
-      cursor += 3.4;
+      cursor += 2.8;
     }
   }
   doc.text(`Quantity: ${order.qty}`, left, cursor);
-  cursor += 3.4;
+  cursor += 2.8;
   doc.setFont("helvetica", "bold");
   doc.text(`Amount: ${amountText(order, "Rs. ")}`, left, cursor, { maxWidth: innerW - 2 });
-  cursor += 3.4;
+  cursor += 2.8;
   if (orderTotals(order).payable > orderTotals(order).total) {
     doc.text(payableText(order, "Rs. "), left, cursor, { maxWidth: innerW - 2 });
-    cursor += 3.4;
+    cursor += 2.8;
   }
   doc.setFont("helvetica", "normal");
 
-  // Thank-you note and Instagram QR anchored to the bottom
-  const trackTop = y + LABEL_H - 22;
+  // Thank-you note and consignment barcode anchored to the bottom
+  const trackTop = y + LABEL_H - 19;
   doc.setLineWidth(0.3);
   doc.line(left, trackTop, x + LABEL_W - pad, trackTop);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  doc.text("Thank you for shopping with Zawiya Books!", left, trackTop + 7, { maxWidth: innerW - 20 });
-  if (qr) doc.addImage(qr, "PNG", x + LABEL_W - pad - 18, trackTop + 2, 18, 18);
+  doc.text("Thank you for shopping with Zawiya Books!", left, trackTop + 6, { maxWidth: innerW - 36 });
+  if (order.tracking && barcode) {
+    doc.addImage(barcode, "PNG", x + LABEL_W - pad - 35, trackTop + 2, 35, 10);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.text(order.tracking, x + LABEL_W - pad - 17.5, trackTop + 14.5, { align: "center" });
+  }
 }
 
 export async function buildLabelsPdf(orders: Order[], sender: Sender): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-  const qr = await qrDataUrl(INSTAGRAM_URL);
+  const barcodes = new Map<string, string>();
+  for (const order of orders) {
+    if (order.tracking && !barcodes.has(order.tracking)) barcodes.set(order.tracking, barcodePngDataUrl(order.tracking));
+  }
 
   orders.forEach((order, i) => {
     const slot = i % LABELS_PER_PAGE;
@@ -173,7 +175,7 @@ export async function buildLabelsPdf(orders: Order[], sender: Sender): Promise<j
       doc,
       order,
       sender,
-      qr,
+      order.tracking ? barcodes.get(order.tracking) ?? null : null,
       MARGIN + col * (LABEL_W + GAP),
       MARGIN + row * (LABEL_H + GAP),
     );

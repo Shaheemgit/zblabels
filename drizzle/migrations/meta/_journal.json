@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793887788248,
+      "tag": "0000_add_india_post_barcode_pool",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793888580629,
+      "tag": "0001_persist_order_tracking_metadata",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793889178971,
+      "tag": "0002_persist_sheet_order_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793889261969,
+      "tag": "0003_stabilize_barcode_source_keys",
+      "breakpoints": true
+    }
+  ]
+}

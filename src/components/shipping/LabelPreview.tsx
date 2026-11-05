@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { INSTAGRAM_URL, LABELS_PER_PAGE, qrDataUrl } from "@/lib/shipping/pdf";
+import { LABELS_PER_PAGE } from "@/lib/shipping/pdf";
+import { renderBarcodeSvg } from "@/lib/shipping/barcode";
 import { amountText, codAmountText, INDIA_POST_CUSTOMER_ID, payableText, senderLines, type Order, type Sender } from "@/lib/shipping/types";
 import { parseBooks } from "@/lib/shipping/whatsapp";
 
@@ -19,19 +20,8 @@ function chunk<T>(items: T[], size: number): T[][] {
 export function LabelPreview({ orders, sender }: { orders: Order[]; sender: Sender }) {
   const pages = chunk(orders, LABELS_PER_PAGE);
   const [page, setPage] = useState(0);
-  const [qr, setQr] = useState("");
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-
-  useEffect(() => {
-    let cancelled = false;
-    qrDataUrl(INSTAGRAM_URL).then((url) => {
-      if (!cancelled) setQr(url);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useLayoutEffect(() => {
     const measure = () => {
@@ -89,7 +79,7 @@ export function LabelPreview({ orders, sender }: { orders: Order[]; sender: Send
               data-page-index={i}
             >
               {pageOrders.map((order) => (
-                <LabelCard key={order.id} order={order} sender={sender} qr={qr} />
+                <LabelCard key={order.id} order={order} sender={sender} />
               ))}
             </div>
           ))}
@@ -102,12 +92,17 @@ export function LabelPreview({ orders, sender }: { orders: Order[]; sender: Send
 function LabelCard({
   order,
   sender,
-  qr,
 }: {
   order: Order;
   sender: Sender;
-  qr?: string | undefined;
 }) {
+  const barcodeRef = useRef<SVGSVGElement>(null);
+  useLayoutEffect(() => {
+    const node = barcodeRef.current;
+    if (!node || !order.tracking) return;
+    renderBarcodeSvg(node, order.tracking);
+  }, [order.tracking]);
+
   return (
     <div className="zlabel">
       <div style={{ display: "flex", justifyContent: "space-between", gap: "2mm", alignItems: "flex-start" }}>
@@ -164,7 +159,12 @@ function LabelCard({
           )}
           <div style={{ fontSize: "8pt", fontWeight: 700, marginTop: "1mm" }}>Thank you for shopping with Zawiya Books!</div>
         </div>
-        {qr && <img src={qr} alt="Zawiya Books Instagram QR code" style={{ width: "18mm", height: "18mm", flexShrink: 0 }} />}
+        {order.tracking && (
+          <div style={{ width: "35mm", flexShrink: 0, textAlign: "center" }}>
+            <svg ref={barcodeRef} aria-label={`India Post tracking barcode ${order.tracking}`} />
+            <div style={{ fontSize: "7pt", marginTop: "1mm" }}>{order.tracking}</div>
+          </div>
+        )}
       </div>
     </div>
   );

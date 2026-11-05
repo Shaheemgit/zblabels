@@ -3,7 +3,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { statusWriteValue, type WriteStage } from "./sheet";
+import { isIndiaPostConsignmentNumber, statusWriteValue, type WriteStage } from "./sheet";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
 const SPREADSHEET_ID = "1_biaElVDh_qm8z6ZfRKI4BLQUaa_g7Dh-w8Cd9ef-JA";
@@ -11,7 +13,7 @@ const SHEET_GID = 1229129423;
 
 export type WriteStageInput = "payment" | "dispatch" | "delivery";
 
-type SheetMeta = { title: string; letters: Record<WriteStageInput, string>; at: number };
+type SheetMeta = { title: string; letters: Record<WriteStageInput, string>; trackingLetter: string | null; at: number };
 let metaCache: SheetMeta | null = null;
 
 function a1(n: number): string {
@@ -60,12 +62,13 @@ async function loadMeta(): Promise<SheetMeta> {
     if (i < 0) throw new Error(`Sheet column not found: ${words.join(" ")}`);
     return a1(i + 1);
   };
+  const trackingIndex = columns.findIndex((h) => h.toLowerCase().includes("tracking") && h.toLowerCase().includes("number"));
   const letters = {
     payment: find("payment", "status"),
     dispatch: find("dispatch", "status"),
     delivery: find("status", "deliv"), // matches the sheet's "Delivety status " header typo
   };
-  metaCache = { title, letters, at: Date.now() };
+  metaCache = { title, letters, trackingLetter: trackingIndex < 0 ? null : a1(trackingIndex + 1), at: Date.now() };
   return metaCache;
 }
 
@@ -90,4 +93,52 @@ export const updateSheetStatus = createServerFn({ method: "POST" })
       },
     );
     return { ok: true, cell, value };
+  });
+
+async function writeTrackingCells(updates: { row: number; tracking: string }[]) {
+  const { title, trackingLetter } = await loadMeta();
+  if (!trackingLetter) throw new Error('Google Sheet is missing a "Tracking number" column');
+  const data = updates.map(({ row, tracking }) => ({
+    range: quotedRange(title, `${trackingLetter}${row}`),
+    values: [[tracking]],
+  }));
+  await gateway(
+    `/spreadsheets/${SPREADSHEET_ID}/values:batchUpdate`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ valueInputOption: "USER_ENTERED", data }),
+    },
+  );
+}
+
+export const allocateTrackingNumbers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({
+    orders: z.array(z.object({
+      id: z.string().uuid(),
+      sheetRow: z.number().int().min(2).optional(),
+      sheetKey: z.string().max(190).optional(),
+      tracking: z.string().min(1).max(80).optional(),
+    })).min(1).max(500),
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    const assigned: { id: string; tracking: string; sheetRow?: number }[] = [];
+    for (const order of data.orders) {
+      if (order.tracking) {
+        assigned.push({ id: order.id, tracking: order.tracking, ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }) });
+        continue;
+      }
+      const { data: allocated, error } = await context.supabase.rpc("allocate_india_post_barcode", {
+        p_assignment_key: order.sheetRow === undefined
+          ? `order:${order.id}`
+          : `sheet:${order.sheetRow}:${bytesToHex(sha256(utf8ToBytes(order.sheetKey ?? String(order.sheetRow))))}`,
+      });
+      if (error || !allocated) throw new Error(error?.message ?? "Could not allocate a tracking barcode");
+      assigned.push({ id: order.id, tracking: allocated, ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }) });
+    }
+
+    const updates = assigned.flatMap((item) => item.sheetRow === undefined ? [] : [{ row: item.sheetRow, tracking: item.tracking }]);
+    if (updates.length > 0) await writeTrackingCells(updates);
+    return assigned;
   });

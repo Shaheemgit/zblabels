@@ -25,6 +25,10 @@ export function statusWriteValue(stage: WriteStage): string {
   return stage === "payment" ? "Payment Received" : stage === "dispatch" ? "Dispatched" : "Delivered";
 }
 
+export function isIndiaPostConsignmentNumber(value: string): boolean {
+  return /^ZB\d{9}IN$/.test(value);
+}
+
 // Prices are written inside the books column, e.g. "COMBO 1 💰₹790/-" or "ഖലീഫ ഉമർ 💰₹240/-, അലി ഫാത്തിമ 💰₹190/-".
 export function parseSheetAmount(books: string): number {
   const matches = books.matchAll(/₹\s*([\d,]+(?:\.\d+)?)/g);

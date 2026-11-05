@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      india_post_barcodes: {
+        Row: {
+          assigned_at: string | null
+          assigned_user_id: string | null
+          assignment_key: string | null
+          consignment_no: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_user_id?: string | null
+          assignment_key?: string | null
+          consignment_no: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_user_id?: string | null
+          assignment_key?: string | null
+          consignment_no?: string
+        }
+        Relationships: []
+      }
       label_batches: {
         Row: {
           created_at: string
@@ -52,6 +73,9 @@ export type Database = {
           pin: string
           post: string
           qty: number
+          source_sheet_key: string | null
+          source_sheet_row: number | null
+          tracking_number: string | null
           updated_at: string
           user_id: string
         }
@@ -68,6 +92,9 @@ export type Database = {
           pin: string
           post?: string
           qty?: number
+          source_sheet_key?: string | null
+          source_sheet_row?: number | null
+          tracking_number?: string | null
           updated_at?: string
           user_id: string
         }
@@ -84,6 +111,9 @@ export type Database = {
           pin?: string
           post?: string
           qty?: number
+          source_sheet_key?: string | null
+          source_sheet_row?: number | null
+          tracking_number?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -94,7 +124,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      allocate_india_post_barcode: {
+        Args: { p_assignment_key: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
