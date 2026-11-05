@@ -22,6 +22,8 @@ export function OrderList({
   onToggleAll,
   onUpdate,
   onDelete,
+  onRetryTrackingSync,
+  retryingSyncIds,
 }: {
   orders: Order[];
   selected: string[];
@@ -29,6 +31,8 @@ export function OrderList({
   onToggleAll: (checked: boolean) => void;
   onUpdate: (order: Order) => void;
   onDelete: (id: string) => void;
+  onRetryTrackingSync: (order: Order) => void;
+  retryingSyncIds: string[];
 }) {
   const [editing, setEditing] = useState<Order | null>(null);
   const allSelected = orders.length > 0 && selected.length === orders.length;
@@ -74,6 +78,30 @@ export function OrderList({
                     {order.book || "—"} × {order.qty} · ₹{orderTotals(order).total}
                     {order.post ? ` · ${order.post}` : ""} · {order.payment}
                   </div>
+                  {order.tracking && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">
+                        {order.trackingSyncStatus === "synced"
+                          ? "✓ Tracking number saved to Google Sheets"
+                          : order.trackingSyncStatus === "failed"
+                            ? "Tracking number not saved to Google Sheets"
+                            : order.trackingSyncStatus === "not_applicable"
+                              ? "No linked Google Sheet row"
+                              : "Google Sheets sync not checked"}
+                      </span>
+                      {order.trackingSyncStatus === "failed" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8"
+                          disabled={retryingSyncIds.includes(order.id)}
+                          onClick={() => onRetryTrackingSync(order)}
+                        >
+                          {retryingSyncIds.includes(order.id) ? "Retrying…" : "Retry sheet write"}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                   <div className="mt-2">
                     <Label
                       htmlFor={`post-${order.id}`}

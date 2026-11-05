@@ -48,7 +48,7 @@ import {
   insertOrder,
   updateOrder,
 } from "@/lib/shipping/cloud";
-import { allocateTrackingNumbers } from "@/lib/shipping/sheet.functions";
+import { allocateTrackingNumbers, retryTrackingSheetWrite } from "@/lib/shipping/sheet.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -85,6 +85,7 @@ function ordersForBatch(batch: LabelBatch<Order>): Order[] {
 function App() {
   const { session, userId } = useAuth();
   const allocateTrackingFn = useServerFn(allocateTrackingNumbers);
+  const retryTrackingFn = useServerFn(retryTrackingSheetWrite);
   const [sender, setSender] = useState<Sender>(emptySender);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -94,6 +95,7 @@ function App() {
   const [formKey, setFormKey] = useState(0);
   const [history, setHistory] = useState<LabelBatch<Order>[]>([]);
   const [viewBatch, setViewBatch] = useState<string | null>(null);
+  const [retryingSyncIds, setRetryingSyncIds] = useState<string[]>([]);
 
   useEffect(() => {
     setSender(loadSender());
@@ -182,22 +184,50 @@ function App() {
           },
         }));
       }
-      const byId = new Map(assignments.map((item) => [item.id, item.tracking]));
+      const byId = new Map(assignments.map((item) => [item.id, item]));
       const prepared = ordersToPrepare.map((order) => {
-        const tracking = byId.get(order.id) ?? order.tracking;
-        return tracking ? { ...order, tracking } : order;
+        const result = byId.get(order.id);
+        return result
+          ? { ...order, tracking: result.tracking, trackingSyncStatus: result.syncStatus, trackingSyncError: result.syncError }
+          : order;
       });
       setOrders((prev) => prev.map((order) => {
-        const tracking = byId.get(order.id) ?? order.tracking;
-        return tracking ? { ...order, tracking } : order;
+        const result = byId.get(order.id);
+        return result
+          ? { ...order, tracking: result.tracking, trackingSyncStatus: result.syncStatus, trackingSyncError: result.syncError }
+          : order;
       }));
       if (userId) {
         await Promise.all(prepared.map((order) => updateOrder(order)));
+      }
+      const failed = prepared.filter((order) => order.trackingSyncStatus === "failed");
+      if (failed.length > 0) {
+        toast.error(`${failed.length} tracking number${failed.length === 1 ? " was" : "s were"} not saved to Google Sheets. Retry from the label queue.`);
       }
       return prepared;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not assign tracking numbers or update the order sheet");
       return null;
+    }
+  }
+
+  async function retryTrackingSync(order: Order) {
+    if (!userId) {
+      toast.error("Sign in to retry the Google Sheets write");
+      return;
+    }
+    setRetryingSyncIds((previous) => [...new Set([...previous, order.id])]);
+    try {
+      const result = await retryTrackingFn({ data: { orderId: order.id } });
+      const updated = { ...order, trackingSyncStatus: result.status, trackingSyncError: result.status === "failed" ? result.message : undefined };
+      setOrders((previous) => previous.map((item) => item.id === order.id ? updated : item));
+      await updateOrder(updated);
+      if (result.status === "synced") toast.success("Tracking number saved to Google Sheets");
+      else toast.error(result.message || "Could not save the tracking number to Google Sheets");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not retry the Google Sheets write");
+    } finally {
+      setRetryingSyncIds((previous) => previous.filter((id) => id !== order.id));
     }
   }
 
@@ -388,6 +418,8 @@ function App() {
               setSelected((prev) => prev.filter((x) => x !== id));
               if (userId) deleteOrder(id).catch(cloudErr);
             }}
+            onRetryTrackingSync={retryTrackingSync}
+            retryingSyncIds={retryingSyncIds}
           />
         </Section>
 

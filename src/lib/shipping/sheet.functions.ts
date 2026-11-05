@@ -12,6 +12,12 @@ const SPREADSHEET_ID = "1_biaElVDh_qm8z6ZfRKI4BLQUaa_g7Dh-w8Cd9ef-JA";
 const SHEET_GID = 1229129423;
 
 export type WriteStageInput = "payment" | "dispatch" | "delivery";
+export type TrackingAssignment = {
+  id: string;
+  tracking: string;
+  syncStatus: "synced" | "failed" | "not_applicable";
+  syncError?: string;
+};
 
 type SheetMeta = { title: string; letters: Record<WriteStageInput, string>; trackingLetter: string | null; at: number };
 let metaCache: SheetMeta | null = null;
@@ -123,10 +129,15 @@ export const allocateTrackingNumbers = createServerFn({ method: "POST" })
     })).min(1).max(500),
   }).parse(data))
   .handler(async ({ data, context }) => {
-    const assigned: { id: string; tracking: string; sheetRow?: number }[] = [];
+    const assigned: { id: string; tracking: string; sheetRow?: number; sheetKey?: string }[] = [];
     for (const order of data.orders) {
       if (order.tracking) {
-        assigned.push({ id: order.id, tracking: order.tracking, ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }) });
+        assigned.push({
+          id: order.id,
+          tracking: order.tracking,
+          ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }),
+          ...(order.sheetKey ? { sheetKey: order.sheetKey } : {}),
+        });
         continue;
       }
       const { data: allocated, error } = await context.supabase.rpc("allocate_india_post_barcode", {
@@ -135,10 +146,75 @@ export const allocateTrackingNumbers = createServerFn({ method: "POST" })
           : `sheet:${order.sheetRow}:${bytesToHex(sha256(utf8ToBytes(order.sheetKey ?? String(order.sheetRow))))}`,
       });
       if (error || !allocated) throw new Error(error?.message ?? "Could not allocate a tracking barcode");
-      assigned.push({ id: order.id, tracking: allocated, ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }) });
+      assigned.push({
+        id: order.id,
+        tracking: allocated,
+        ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }),
+        ...(order.sheetKey ? { sheetKey: order.sheetKey } : {}),
+      });
     }
 
     const updates = assigned.flatMap((item) => item.sheetRow === undefined ? [] : [{ row: item.sheetRow, tracking: item.tracking }]);
-    if (updates.length > 0) await writeTrackingCells(updates);
-    return assigned;
+    let syncError: string | undefined;
+    if (updates.length > 0) {
+      try {
+        await writeTrackingCells(updates);
+      } catch (error) {
+        syncError = error instanceof Error ? error.message : "Google Sheets write failed";
+      }
+    }
+
+    const results: TrackingAssignment[] = assigned.map((item) => ({
+      id: item.id,
+      tracking: item.tracking,
+      syncStatus: item.sheetRow === undefined ? "not_applicable" : syncError ? "failed" : "synced",
+      ...(item.sheetRow !== undefined && syncError ? { syncError } : {}),
+    }));
+    for (const result of results) {
+      const { error } = await context.supabase
+        .from("orders")
+        .update({ tracking_number: result.tracking, tracking_sync_status: result.syncStatus })
+        .eq("id", result.id)
+        .eq("user_id", context.userId);
+      if (error) console.error("Could not save tracking sync status", error.message);
+    }
+    return results;
+  });
+
+export const retryTrackingSheetWrite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ orderId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: order, error: lookupError } = await context.supabase
+      .from("orders")
+      .select("tracking_number, source_sheet_row")
+      .eq("id", data.orderId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (lookupError || !order) throw new Error("Could not find this saved order");
+    if (!order.tracking_number || order.source_sheet_row === null) {
+      throw new Error("This order has no saved Google Sheet tracking number to retry");
+    }
+
+    try {
+      await writeTrackingCells([{ row: order.source_sheet_row, tracking: order.tracking_number }]);
+      const { error } = await context.supabase
+        .from("orders")
+        .update({ tracking_sync_status: "synced" })
+        .eq("id", data.orderId)
+        .eq("user_id", context.userId);
+      if (error) throw new Error("Tracking number reached the sheet, but its saved status could not be updated");
+      return { status: "synced" as const };
+    } catch (error) {
+      const { error: statusError } = await context.supabase
+        .from("orders")
+        .update({ tracking_sync_status: "failed" })
+        .eq("id", data.orderId)
+        .eq("user_id", context.userId);
+      if (statusError) console.error("Could not save tracking sync failure status", statusError.message);
+      return {
+        status: "failed" as const,
+        message: error instanceof Error ? error.message : "Google Sheets write failed",
+      };
+    }
   });
