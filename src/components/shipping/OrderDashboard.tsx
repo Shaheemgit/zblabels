@@ -101,6 +101,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
       amount: r.amount > 0 ? r.amount : 260 * r.qty,
       ...(r.tracking ? { tracking: r.tracking } : {}),
       sheetRow: r.sheetRow,
+      sheetKey: r.key,
     });
     commitOrderSeq(seq);
   }
