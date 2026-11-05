@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { STAGES, stageMessage, waLink, type Stage } from "@/lib/shipping/whatsapp";
 import {
-  ORDER_SHEET, fetchSheetRows, stageOf, statusWriteValue,
+  ORDER_SHEET, fetchSheetRows, isPendingPrepaid, stageOf, statusWriteValue,
   type SheetRow, type WriteStage,
 } from "@/lib/shipping/sheet";
 import { loadLabeledKeys, saveLabeledKeys } from "@/lib/shipping/storage";
