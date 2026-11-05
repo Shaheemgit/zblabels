@@ -15,6 +15,13 @@
       "when": 1793888580629,
       "tag": "0001_persist_order_tracking_metadata",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793889178971,
+      "tag": "0002_persist_sheet_order_identity",
+      "breakpoints": true
     }
   ]
 }

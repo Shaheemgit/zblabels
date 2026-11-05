@@ -73,6 +73,7 @@ export type Database = {
           pin: string
           post: string
           qty: number
+          source_sheet_key: string | null
           source_sheet_row: number | null
           tracking_number: string | null
           updated_at: string
@@ -91,6 +92,7 @@ export type Database = {
           pin: string
           post?: string
           qty?: number
+          source_sheet_key?: string | null
           source_sheet_row?: number | null
           tracking_number?: string | null
           updated_at?: string
@@ -109,6 +111,7 @@ export type Database = {
           pin?: string
           post?: string
           qty?: number
+          source_sheet_key?: string | null
           source_sheet_row?: number | null
           tracking_number?: string | null
           updated_at?: string
