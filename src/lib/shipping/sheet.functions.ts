@@ -113,7 +113,7 @@ async function writeTrackingCells(updates: { row: number; tracking: string }[]) 
 export const allocateTrackingNumbers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
-    orders: z.array(z.object({ id: z.string().uuid(), sheetRow: z.number().int().min(2).optional(), sheetKey: z.string().max(250).optional() })).min(1).max(500),
+    orders: z.array(z.object({ id: z.string().uuid(), sheetRow: z.number().int().min(2).optional(), sheetKey: z.string().max(190).optional() })).min(1).max(500),
   }).parse(data))
   .handler(async ({ data, context }) => {
     const assigned: { id: string; tracking: string; sheetRow?: number }[] = [];
