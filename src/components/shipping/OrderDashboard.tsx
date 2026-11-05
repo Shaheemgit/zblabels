@@ -114,20 +114,6 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
     });
   }
 
-  function markCreatedThroughTarget() {
-    const target = shown[0];
-    if (!target || !q.trim() || shown.length !== 1) return;
-
-    const keys = unlabeledKeysThrough(rows ?? [], target.key, labeled);
-    if (keys.length === 0) {
-      toast.info("No eligible unlabeled orders through this customer");
-      return;
-    }
-
-    markLabeled(keys);
-    toast.success(`${keys.length} eligible order${keys.length === 1 ? "" : "s"} marked label created through ${target.customer || "this order"}`);
-  }
-
   function markCreatedThroughArshad() {
     const keys = labelCutoffContactKeys(rows ?? [], "8156821938", labeled);
     if (keys.length === 0) {
@@ -177,12 +163,6 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
           Mark labels created through Arshad (8156821938)
         </Button>
       )}
-      {rows !== null && q.trim() && shown.length === 1 && (
-        <Button variant="outline" className="w-full" onClick={markCreatedThroughTarget}>
-          Mark labels created through {shown[0]?.customer || "this order"}
-        </Button>
-      )}
-
       {rows && (
         <>
           <div className="flex flex-wrap gap-1">

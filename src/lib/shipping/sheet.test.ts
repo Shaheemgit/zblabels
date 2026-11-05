@@ -57,8 +57,8 @@ describe("unlabeledKeysThrough", () => {
     ];
 
     expect(unlabeledKeysThrough(rows, "arshad-order", [])).toEqual([
-      "earlier-order",
       "arshad-order",
+      "earlier-order",
     ]);
   });
 
@@ -70,7 +70,7 @@ describe("unlabeledKeysThrough", () => {
       row({ key: "earlier", sheetRow: 2 }),
     ];
 
-    expect(labelCutoffContactKeys(rows, "8156821938", [])).toEqual(["earlier", "arshad"]);
+    expect(labelCutoffContactKeys(rows, "8156821938", [])).toEqual(["arshad", "earlier"]);
     expect(labelCutoffContactKeys(rows, "0000000000", [])).toEqual(["newer"]);
   });
 });
