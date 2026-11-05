@@ -113,15 +113,11 @@ async function writeTrackingCells(updates: { row: number; tracking: string }[]) 
 export const allocateTrackingNumbers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
-    orders: z.array(z.object({ id: z.string().uuid(), sheetRow: z.number().int().min(2).optional(), tracking: z.string().refine(isIndiaPostConsignmentNumber).optional() })).min(1).max(500),
+    orders: z.array(z.object({ id: z.string().uuid(), sheetRow: z.number().int().min(2).optional() })).min(1).max(500),
   }).parse(data))
   .handler(async ({ data, context }) => {
     const assigned: { id: string; tracking: string; sheetRow?: number }[] = [];
     for (const order of data.orders) {
-      if (order.tracking) {
-        assigned.push({ id: order.id, tracking: order.tracking, ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }) });
-        continue;
-      }
       const { data: allocated, error } = await context.supabase.rpc("allocate_india_post_barcode", {
         p_assignment_key: order.sheetRow === undefined
           ? `order:${order.id}`
@@ -131,10 +127,7 @@ export const allocateTrackingNumbers = createServerFn({ method: "POST" })
       assigned.push({ id: order.id, tracking: allocated, ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }) });
     }
 
-    const updates = assigned.flatMap((item) => {
-      const input = data.orders.find((order) => order.id === item.id);
-      return item.sheetRow === undefined || input?.tracking ? [] : [{ row: item.sheetRow, tracking: item.tracking }];
-    });
+    const updates = assigned.flatMap((item) => item.sheetRow === undefined ? [] : [{ row: item.sheetRow, tracking: item.tracking }]);
     if (updates.length > 0) await writeTrackingCells(updates);
     return assigned;
   });

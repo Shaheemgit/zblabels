@@ -169,7 +169,6 @@ function App() {
             orders: group.map((order) => ({
               id: order.id,
               ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }),
-              ...(order.tracking ? { tracking: order.tracking } : {}),
             })),
           },
         }));
