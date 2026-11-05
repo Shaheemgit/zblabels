@@ -3,7 +3,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { statusWriteValue, type WriteStage } from "./sheet";
+import { isIndiaPostConsignmentNumber, statusWriteValue, type WriteStage } from "./sheet";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
 const SPREADSHEET_ID = "1_biaElVDh_qm8z6ZfRKI4BLQUaa_g7Dh-w8Cd9ef-JA";
@@ -113,7 +113,7 @@ async function writeTrackingCells(updates: { row: number; tracking: string }[]) 
 export const allocateTrackingNumbers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
-    orders: z.array(z.object({ id: z.string().uuid(), sheetRow: z.number().int().min(2).optional(), tracking: z.string().regex(/^ZB\d{9}IN$/).optional() })).min(1).max(500),
+    orders: z.array(z.object({ id: z.string().uuid(), sheetRow: z.number().int().min(2).optional(), tracking: z.string().refine(isIndiaPostConsignmentNumber).optional() })).min(1).max(500),
   }).parse(data))
   .handler(async ({ data, context }) => {
     const assigned: { id: string; tracking: string; sheetRow?: number }[] = [];

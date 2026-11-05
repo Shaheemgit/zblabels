@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isPendingPrepaid, parseSheetAmount, stageOf, statusWriteValue, type SheetRow } from "./sheet";
+import { isIndiaPostConsignmentNumber, isPendingPrepaid, parseSheetAmount, stageOf, statusWriteValue, type SheetRow } from "./sheet";
 
 function row(partial: Partial<SheetRow>): SheetRow {
   return {
@@ -71,5 +71,15 @@ describe("statusWriteValue", () => {
 
   it("writes Delivered for the delivery stage", () => {
     expect(statusWriteValue("delivery")).toBe("Delivered");
+  });
+});
+
+describe("consignment barcode validation", () => {
+  it("accepts the supplied India Post code format", () => {
+    expect(isIndiaPostConsignmentNumber("ZB994627555IN")).toBe(true);
+  });
+
+  it("rejects malformed codes instead of inventing a replacement", () => {
+    expect(isIndiaPostConsignmentNumber("ZB123IN")).toBe(false);
   });
 });
