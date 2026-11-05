@@ -76,6 +76,7 @@ export type Database = {
           source_sheet_key: string | null
           source_sheet_row: number | null
           tracking_number: string | null
+          tracking_sync_status: string | null
           updated_at: string
           user_id: string
         }
@@ -95,6 +96,7 @@ export type Database = {
           source_sheet_key?: string | null
           source_sheet_row?: number | null
           tracking_number?: string | null
+          tracking_sync_status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -114,6 +116,7 @@ export type Database = {
           source_sheet_key?: string | null
           source_sheet_row?: number | null
           tracking_number?: string | null
+          tracking_sync_status?: string | null
           updated_at?: string
           user_id?: string
         }

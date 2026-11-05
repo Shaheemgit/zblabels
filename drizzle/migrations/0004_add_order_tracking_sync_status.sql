@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN tracking_sync_status TEXT CHECK (tracking_sync_status IN ('pending', 'synced', 'failed', 'not_applicable'));
