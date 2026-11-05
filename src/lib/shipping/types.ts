@@ -34,8 +34,8 @@ export type Order = {
   amount: number;
   post: string;
   payment: "Prepaid" | "COD";
-  tracking?: string;
-  sheetRow?: number;
+  tracking?: string | undefined;
+  sheetRow?: number | undefined;
 };
 
 export function senderIsComplete(s: Sender): boolean {
