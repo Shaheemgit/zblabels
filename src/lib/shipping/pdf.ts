@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import { amountText, codAmountText, orderTotals, payableText, INDIA_POST_CUSTOMER_ID, senderLines, type Order, type Sender } from "./types";
 import { parseBooks } from "./whatsapp";
-import { barcodeSvgDataUrl } from "./barcode";
+import { barcodePngDataUrl } from "./barcode";
 
 export const LABELS_PER_PAGE = 4;
 export function pdfFileName(count: number): string {
@@ -25,6 +25,7 @@ function drawLabel(
   doc: jsPDF,
   order: Order,
   sender: Sender,
+  barcode: string | null,
   x: number,
   y: number,
 ) {
@@ -150,9 +151,8 @@ function drawLabel(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.text("Thank you for shopping with Zawiya Books!", left, trackTop + 7, { maxWidth: innerW - 36 });
-  if (order.tracking) {
-    const barcode = barcodeSvgDataUrl(order.tracking);
-    doc.addImage(barcode, "SVG", x + LABEL_W - pad - 35, trackTop + 3, 35, 12);
+  if (order.tracking && barcode) {
+    doc.addImage(barcode, "PNG", x + LABEL_W - pad - 35, trackTop + 3, 35, 12);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.text(order.tracking, x + LABEL_W - pad - 17.5, trackTop + 18, { align: "center" });
@@ -161,6 +161,10 @@ function drawLabel(
 
 export async function buildLabelsPdf(orders: Order[], sender: Sender): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const barcodes = new Map<string, string>();
+  for (const order of orders) {
+    if (order.tracking && !barcodes.has(order.tracking)) barcodes.set(order.tracking, barcodePngDataUrl(order.tracking));
+  }
 
   orders.forEach((order, i) => {
     const slot = i % LABELS_PER_PAGE;
@@ -171,6 +175,7 @@ export async function buildLabelsPdf(orders: Order[], sender: Sender): Promise<j
       doc,
       order,
       sender,
+      order.tracking ? barcodes.get(order.tracking) ?? null : null,
       MARGIN + col * (LABEL_W + GAP),
       MARGIN + row * (LABEL_H + GAP),
     );

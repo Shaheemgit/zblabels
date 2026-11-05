@@ -1,8 +1,8 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LABELS_PER_PAGE } from "@/lib/shipping/pdf";
-import { barcodeSvgElement } from "@/lib/shipping/barcode";
+import { renderBarcodeSvg } from "@/lib/shipping/barcode";
 import { amountText, codAmountText, INDIA_POST_CUSTOMER_ID, payableText, senderLines, type Order, type Sender } from "@/lib/shipping/types";
 import { parseBooks } from "@/lib/shipping/whatsapp";
 
@@ -100,9 +100,7 @@ function LabelCard({
   useLayoutEffect(() => {
     const node = barcodeRef.current;
     if (!node || !order.tracking) return;
-    const generated = barcodeSvgElement(order.tracking);
-    node.replaceWith(generated);
-    return () => generated.remove();
+    renderBarcodeSvg(node, order.tracking);
   }, [order.tracking]);
 
   return (

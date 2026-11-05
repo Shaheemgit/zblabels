@@ -3,7 +3,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { statusWriteValue, type TrackingAssignment, type WriteStage } from "./sheet";
+import { statusWriteValue, type WriteStage } from "./sheet";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
 const SPREADSHEET_ID = "1_biaElVDh_qm8z6ZfRKI4BLQUaa_g7Dh-w8Cd9ef-JA";
@@ -96,20 +96,47 @@ export const updateSheetStatus = createServerFn({ method: "POST" })
 export const updateSheetTrackingNumbers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) =>
-    z.object({ assignments: z.array(z.object({ row: z.number().int().min(2), tracking: z.string().regex(/^ZB\d{9}IN$/) })).min(1).max(100) }).parse(data),
+    z.object({ updates: z.array(z.object({ row: z.number().int().min(2), tracking: z.string().regex(/^ZB\d{9}IN$/) })).min(1).max(100) }).parse(data),
   )
   .handler(async ({ data }) => {
     const { title, letters } = await loadMeta();
-    const cells = data.assignments.map(({ row, tracking }) => ({ row, tracking }));
-    for (const item of cells) {
-      await gateway(
-        `/spreadsheets/${SPREADSHEET_ID}/values/${quotedRange(title, `${letters.tracking}${item.row}`)}?valueInputOption=USER_ENTERED`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ values: [[item.tracking]] }),
-        },
-      );
+    const updates = data.updates.map(({ row, tracking }) => ({
+      range: quotedRange(title, `${letters.tracking}${row}`),
+      values: [[tracking]],
+    }));
+    await gateway(
+      `/spreadsheets/${SPREADSHEET_ID}/values:batchUpdate`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ valueInputOption: "USER_ENTERED", data: updates }),
+      },
+    );
+    return { ok: true, updated: updates.length };
+  });
+
+export const allocateTrackingNumbers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({
+    orders: z.array(z.object({ id: z.string().uuid(), sheetRow: z.number().int().min(2).optional(), tracking: z.string().regex(/^ZB\d{9}IN$/).optional() })).min(1).max(100),
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    const assigned: { id: string; tracking: string; sheetRow?: number }[] = [];
+    for (const order of data.orders) {
+      const { data: allocated, error } = await context.supabase.rpc("allocate_india_post_barcode", {
+        p_assignment_key: order.sheetRow === undefined
+          ? `order:${order.id}`
+          : `sheet:${order.sheetRow}:${order.sheetRow}`,
+      });
+      if (error || !allocated) throw new Error(error?.message ?? "Could not allocate a tracking barcode");
+      assigned.push({ id: order.id, tracking: order.tracking ?? allocated, ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }) });
     }
-    return { ok: true, updated: cells.length };
+
+    const updates = assigned.flatMap((item) =>
+      item.sheetRow !== undefined && !data.orders.find((o) => o.id === item.id)?.tracking
+        ? [{ row: item.sheetRow, tracking: item.tracking }]
+        : [],
+    );
+    if (updates.length > 0) await updateSheetTrackingNumbers({ data: { updates } });
+    return assigned;
   });

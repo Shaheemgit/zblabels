@@ -21,6 +21,12 @@ export type SheetRow = {
 
 export type TrackingAssignment = { row: number; tracking: string };
 
+export function trackingAssignmentKey(order: { id: string; sheetRow?: number }): string {
+  return typeof order.sheetRow === "number"
+    ? `sheet:${order.sheetRow}:${order.sheetRow}`
+    : `order:${order.id}`;
+}
+
 // Value written into the sheet's status column for each managed stage.
 export type WriteStage = "payment" | "dispatch" | "delivery";
 export function statusWriteValue(stage: WriteStage): string {
