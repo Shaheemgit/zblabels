@@ -3,4 +3,5 @@
 - [x] Replace QR graphics with Code 128 tracking barcodes in label preview and PDF.
 - [x] Keep previously generated label history barcode-free; enable barcodes only for labels generated from now onward.
 - [x] Verify the app loads, barcode renders, sample PDF is readable, and unit tests/typecheck pass.
+- [ ] Show each order's tracking-number sheet-write status and provide a safe retry using its already-assigned number.
 - [ ] Verify signed-in allocation and Google Sheet write-back after the owner signs in to the preview.
