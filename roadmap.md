@@ -1,0 +1,4 @@
+- [ ] Seed and safely allocate the uploaded one-time barcode pool.
+- [ ] Persist tracking numbers with orders and write sheet-linked numbers to Google Sheets during label generation.
+- [ ] Replace QR graphics with Code 128 tracking barcodes in label preview and PDF.
+- [ ] Run tests and typecheck; verify the generation flow and current diagnostics.
