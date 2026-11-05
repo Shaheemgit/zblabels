@@ -170,6 +170,7 @@ function App() {
               id: order.id,
               ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }),
               ...(order.sheetKey ? { sheetKey: order.sheetKey } : {}),
+              ...(order.tracking ? { tracking: order.tracking } : {}),
             })),
           },
         }));
