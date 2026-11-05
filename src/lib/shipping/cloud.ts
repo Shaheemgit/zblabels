@@ -15,6 +15,8 @@ type OrderRow = {
   amount: number;
   payment: string;
   post: string;
+  tracking_number: string | null;
+  source_sheet_row: number | null;
   created_at: string;
 };
 
@@ -31,6 +33,8 @@ function rowToOrder(r: OrderRow): Order {
     amount: Number(r.amount),
     post: r.post,
     payment: r.payment === "COD" ? "COD" : "Prepaid",
+    tracking: r.tracking_number ?? undefined,
+    sheetRow: r.source_sheet_row ?? undefined,
   };
 }
 
@@ -48,6 +52,8 @@ function orderToRow(o: Order, userId: string) {
     amount: o.amount,
     payment: o.payment,
     post: o.post,
+    tracking_number: o.tracking ?? null,
+    source_sheet_row: o.sheetRow ?? null,
   };
 }
 
@@ -76,6 +82,8 @@ export async function updateOrder(o: Order) {
       amount: o.amount,
       payment: o.payment,
       post: o.post,
+      tracking_number: o.tracking ?? null,
+      source_sheet_row: o.sheetRow ?? null,
     })
     .eq("id", o.id);
   if (error) throw error;

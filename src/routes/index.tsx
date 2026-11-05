@@ -166,12 +166,16 @@ function App() {
           orders: ordersToPrepare.map((order) => ({
             id: order.id,
             ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }),
+            ...(order.tracking ? { tracking: order.tracking } : {}),
           })),
         },
       });
       const byId = new Map(assignments.map((item) => [item.id, item.tracking]));
       const prepared = ordersToPrepare.map((order) => ({ ...order, tracking: byId.get(order.id) ?? order.tracking }));
       setOrders((prev) => prev.map((order) => ({ ...order, tracking: byId.get(order.id) ?? order.tracking })));
+      if (userId) {
+        await Promise.all(prepared.map((order) => updateOrder(order)));
+      }
       return prepared;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not assign tracking numbers or update the order sheet");
