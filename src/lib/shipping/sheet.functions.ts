@@ -11,7 +11,7 @@ const SHEET_GID = 1229129423;
 
 export type WriteStageInput = "payment" | "dispatch" | "delivery";
 
-type SheetMeta = { title: string; letters: Record<WriteStageInput | "tracking", string>; at: number };
+type SheetMeta = { title: string; letters: Record<WriteStageInput, string>; trackingLetter: string | null; at: number };
 let metaCache: SheetMeta | null = null;
 
 function a1(n: number): string {
@@ -60,13 +60,13 @@ async function loadMeta(): Promise<SheetMeta> {
     if (i < 0) throw new Error(`Sheet column not found: ${words.join(" ")}`);
     return a1(i + 1);
   };
+  const trackingIndex = columns.findIndex((h) => h.toLowerCase().includes("tracking") && h.toLowerCase().includes("number"));
   const letters = {
     payment: find("payment", "status"),
     dispatch: find("dispatch", "status"),
     delivery: find("status", "deliv"), // matches the sheet's "Delivety status " header typo
-    tracking: find("tracking", "number"),
   };
-  metaCache = { title, letters, at: Date.now() };
+  metaCache = { title, letters, trackingLetter: trackingIndex < 0 ? null : a1(trackingIndex + 1), at: Date.now() };
   return metaCache;
 }
 
@@ -93,20 +93,11 @@ export const updateSheetStatus = createServerFn({ method: "POST" })
     return { ok: true, cell, value };
   });
 
-export const updateSheetTrackingNumbers = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
-    z.object({ updates: z.array(z.object({ row: z.number().int().min(2), tracking: z.string().regex(/^ZB\d{9}IN$/) })).min(1).max(100) }).parse(data),
-  )
-  .handler(async ({ data }) => {
-    await writeTrackingCells(data.updates);
-    return { ok: true, updated: data.updates.length };
-  });
-
 async function writeTrackingCells(updates: { row: number; tracking: string }[]) {
-  const { title, letters } = await loadMeta();
+  const { title, trackingLetter } = await loadMeta();
+  if (!trackingLetter) throw new Error('Google Sheet is missing a "Tracking number" column');
   const data = updates.map(({ row, tracking }) => ({
-    range: quotedRange(title, `${letters.tracking}${row}`),
+    range: quotedRange(title, `${trackingLetter}${row}`),
     values: [[tracking]],
   }));
   await gateway(
@@ -122,7 +113,7 @@ async function writeTrackingCells(updates: { row: number; tracking: string }[]) 
 export const allocateTrackingNumbers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
-    orders: z.array(z.object({ id: z.string().uuid(), sheetRow: z.number().int().min(2).optional(), tracking: z.string().regex(/^ZB\d{9}IN$/).optional() })).min(1).max(100),
+    orders: z.array(z.object({ id: z.string().uuid(), sheetRow: z.number().int().min(2).optional(), tracking: z.string().regex(/^ZB\d{9}IN$/).optional() })).min(1).max(500),
   }).parse(data))
   .handler(async ({ data, context }) => {
     const assigned: { id: string; tracking: string; sheetRow?: number }[] = [];

@@ -161,15 +161,19 @@ function App() {
       return null;
     }
     try {
-      const assignments = await allocateTrackingFn({
-        data: {
-          orders: ordersToPrepare.map((order) => ({
-            id: order.id,
-            ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }),
-            ...(order.tracking ? { tracking: order.tracking } : {}),
-          })),
-        },
-      });
+      const assignments = [] as Awaited<ReturnType<typeof allocateTrackingFn>>;
+      for (let i = 0; i < ordersToPrepare.length; i += 100) {
+        const group = ordersToPrepare.slice(i, i + 100);
+        assignments.push(...await allocateTrackingFn({
+          data: {
+            orders: group.map((order) => ({
+              id: order.id,
+              ...(order.sheetRow === undefined ? {} : { sheetRow: order.sheetRow }),
+              ...(order.tracking ? { tracking: order.tracking } : {}),
+            })),
+          },
+        }));
+      }
       const byId = new Map(assignments.map((item) => [item.id, item.tracking]));
       const prepared = ordersToPrepare.map((order) => ({ ...order, tracking: byId.get(order.id) ?? order.tracking }));
       setOrders((prev) => prev.map((order) => ({ ...order, tracking: byId.get(order.id) ?? order.tracking })));
