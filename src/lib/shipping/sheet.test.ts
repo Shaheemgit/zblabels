@@ -64,7 +64,7 @@ describe("unlabeledKeysThrough", () => {
 
   it("finds the requested contact as a cutoff and excludes every pending-payment row", () => {
     const rows = [
-      row({ key: "newer", contact: "5550000000", sheetRow: 8 }),
+      row({ key: "newer", contact: "0000000000", sheetRow: 8 }),
       row({ key: "arshad", contact: "+91 81568 21938", sheetRow: 5 }),
       row({ key: "pending", payStatus: "Payment Pending", sheetRow: 4 }),
       row({ key: "earlier", sheetRow: 2 }),
