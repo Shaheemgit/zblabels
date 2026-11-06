@@ -19,6 +19,14 @@ export type SheetRow = {
   tracking: string; sheetRow: number;
 };
 
+// Orders with labels already printed before onboarding are treated as labeled.
+export function preLabeledKeysInSheetRowRange(rows: SheetRow[]): string[] {
+  return rows
+    .filter((row) => row.sheetRow >= 2 && row.sheetRow <= 267)
+    .filter((row) => !/pending/i.test(row.payStatus))
+    .map((row) => row.key);
+}
+
 // Value written into the sheet's status column for each managed stage.
 export type WriteStage = "payment" | "dispatch" | "delivery";
 export function statusWriteValue(stage: WriteStage): string {

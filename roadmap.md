@@ -5,5 +5,6 @@
 - [x] Verify the app loads, barcode renders, sample PDF is readable, and unit tests/typecheck pass.
 - [x] Show each order's tracking-number sheet-write status and provide a safe retry using its already-assigned number.
 - [x] Add a pre-print checklist for recipient details, India Post tracking format, and Google Sheets sync.
-- [x] Mark orders up to Arshad’s specified contact as already labeled in browser storage, excluding any pending-payment rows.
+- [x] Automatically mark eligible Google Sheet rows 2–267 as label-created, excluding pending-payment rows.
+- [x] Offer per-order label regeneration for orders already marked label-created.
 - [ ] Verify signed-in allocation and Google Sheet write-back after the owner signs in to the preview.

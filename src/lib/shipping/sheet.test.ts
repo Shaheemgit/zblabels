@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isIndiaPostConsignmentNumber, isPendingPrepaid, labelCutoffContactKeys, parseSheetAmount, stageOf, statusWriteValue, unlabeledKeysThrough, type SheetRow } from "./sheet";
+import { isIndiaPostConsignmentNumber, isPendingPrepaid, labelCutoffContactKeys, parseSheetAmount, preLabeledKeysInSheetRowRange, stageOf, statusWriteValue, unlabeledKeysThrough, type SheetRow } from "./sheet";
 
 function row(partial: Partial<SheetRow>): SheetRow {
   return {
@@ -72,6 +72,21 @@ describe("unlabeledKeysThrough", () => {
 
     expect(labelCutoffContactKeys(rows, "8156821938", [])).toEqual(["arshad", "earlier"]);
     expect(labelCutoffContactKeys(rows, "9999999999", [])).toEqual([]);
+  });
+});
+
+describe("preLabeledKeysInSheetRowRange", () => {
+  it("marks Google Sheet rows 2 through 267 as labeled, excluding pending-payment rows", () => {
+    const rows = [
+      row({ key: "row-268", sheetRow: 268 }),
+      row({ key: "row-267", sheetRow: 267 }),
+      row({ key: "pending-cod", sheetRow: 100, cod: true, payStatus: "Payment Pending" }),
+      row({ key: "pending-prepaid", sheetRow: 50, payStatus: "Payment Pending" }),
+      row({ key: "row-2", sheetRow: 2 }),
+      row({ key: "row-1", sheetRow: 1 }),
+    ];
+
+    expect(preLabeledKeysInSheetRowRange(rows)).toEqual(["row-267", "row-2"]);
   });
 });
 
