@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { STAGES, stageMessage, waLink, type Stage } from "@/lib/shipping/whatsapp";
 import {
-  ORDER_SHEET, fetchSheetRows, isPendingPrepaid, labelCutoffContactKeys, stageOf, statusWriteValue, unlabeledKeysThrough,
+  ORDER_SHEET, fetchSheetRows, isPendingPrepaid, preLabeledKeysInSheetRowRange, stageOf, statusWriteValue,
   type SheetRow, type WriteStage,
 } from "@/lib/shipping/sheet";
 import { loadLabeledKeys, saveLabeledKeys } from "@/lib/shipping/storage";
@@ -37,6 +37,12 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
     try {
       const parsed = await fetchSheetRows(ORDER_SHEET);
       setRows(parsed);
+      const preLabeledKeys = preLabeledKeysInSheetRowRange(parsed);
+      setLabeled((previous) => {
+        const next = Array.from(new Set([...previous, ...preLabeledKeys]));
+        saveLabeledKeys(next);
+        return next;
+      });
       if (parsed.length === 0) toast.success("No orders in this sheet yet");
     } catch {
       toast.error("Could not read this Google Sheet. Share it as 'Anyone with the link can view'.");
@@ -114,22 +120,12 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
     });
   }
 
-  function markCreatedThroughArshad() {
-    const keys = labelCutoffContactKeys(rows ?? [], "8156821938", labeled);
-    if (keys.length === 0) {
-      toast.error("Could not find eligible orders through contact 8156821938");
-      return;
-    }
-    markLabeled(keys);
-    toast.success(`${keys.length} eligible orders marked label created through Arshad`);
-  }
-
   function makeLabel(r: SheetRow) {
     if (isPendingPrepaid(r)) { toast.error("Payment pending — the label unlocks once payment is received"); return; }
-    if (labeled.includes(r.key)) { toast.info("Label already created for this order"); return; }
+    const wasLabeled = labeled.includes(r.key);
     addLabel(r);
-    markLabeled([r.key]);
-    toast.success("Order added to the label queue");
+    if (!wasLabeled) markLabeled([r.key]);
+    toast.success(wasLabeled ? "Order added to the label queue for regeneration" : "Order added to the label queue");
   }
 
   // Bulk: queue every order currently shown by the filter/search, skipping ones
@@ -158,11 +154,6 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
           </Button>
         )}
       </div>
-      {rows !== null && (
-        <Button variant="outline" className="w-full" onClick={markCreatedThroughArshad}>
-          Mark labels created through Arshad (8156821938)
-        </Button>
-      )}
       {rows && (
         <>
           <div className="flex flex-wrap gap-1">
@@ -216,7 +207,7 @@ export function OrderDashboard({ onAdd, signedIn }: { onAdd: (o: Omit<Order, "id
                       </span>
                     ) : (
                       <Button size="sm" variant={isLabeled ? "outline" : "default"} onClick={() => makeLabel(r)}>
-                        {isLabeled ? "✓ Label created" : "Make label"}
+                        {isLabeled ? "Regenerate label" : "Make label"}
                       </Button>
                     )}
                     {/* COD orders are paid on delivery: "Cash on Delivery" stands in for "Mark Paid". */}
